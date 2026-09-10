@@ -33,6 +33,19 @@ If collector code changed, verify:
 - no competitor-specific core logic;
 - Mock and future HTTP collectors share one interface.
 
+If D7 ORM or installer/schema code changed, do not stop at reviewing the PHP field declaration. Verify the physical schema implications that Bitrix will generate from the field metadata on the supported database engine. In particular check:
+- actual varchar/text capacity versus the documented contract;
+- whether `configureSize()` alone affects generated DDL or only value metadata;
+- `LengthValidator` and other validators that SQL helpers may inspect;
+- nullable/required/default semantics in both ORM and generated schema;
+- primary/autoincrement behavior;
+- indexes/uniqueness where required;
+- timestamp/default/update behavior;
+- idempotent table creation;
+- reinstall/update behavior and data-preservation requirements.
+
+When CI has no real Bitrix runtime, explicitly identify ORM/DDL behavior that remains unverified by PHPUnit. Require a concise manual Bitrix integration check for those points rather than accepting unit tests as proof of generated schema correctness.
+
 Output findings by severity: Critical, High, Medium, Low.
 
 For each finding include file/line when available, failure scenario, impact, and minimal fix.
