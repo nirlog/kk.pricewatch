@@ -50,14 +50,23 @@ final class ProductCompetitorTableMetadataTest extends TestCase
         $source = file_get_contents(__DIR__ . '/../../lib/Model/ProductCompetitorTable.php');
 
         self::assertIsString($source);
-        self::assertMatchesRegularExpression(
-            '/new StringField\\(\'CURRENCY\'\\).*?configureSize\\(3\\).*?new LengthValidator\\(3, 3\\).*?Money::assertCurrency\\(\\$value\\)/s',
-            $source
-        );
-        self::assertMatchesRegularExpression(
-            '/new StringField\\(\'STATUS\'\\).*?configureSize\\(16\\).*?new LengthValidator\\(null, 16\\).*?CollectionStatus::isValid\\(\\$value\\)/s',
-            $source
-        );
+        $currencyStart = strpos($source, "new StringField('CURRENCY')");
+        $statusStart = strpos($source, "new StringField('STATUS')");
+        $errorCodeStart = strpos($source, "new StringField('ERROR_CODE')");
+
+        self::assertIsInt($currencyStart);
+        self::assertIsInt($statusStart);
+        self::assertIsInt($errorCodeStart);
+
+        $currencyDeclaration = substr($source, $currencyStart, $statusStart - $currencyStart);
+        $statusDeclaration = substr($source, $statusStart, $errorCodeStart - $statusStart);
+
+        self::assertStringContainsString('configureSize(3)', $currencyDeclaration);
+        self::assertStringContainsString('new LengthValidator(3, 3)', $currencyDeclaration);
+        self::assertStringContainsString('Money::assertCurrency($value)', $currencyDeclaration);
+        self::assertStringContainsString('configureSize(16)', $statusDeclaration);
+        self::assertStringContainsString('new LengthValidator(null, 16)', $statusDeclaration);
+        self::assertStringContainsString('CollectionStatus::isValid($value)', $statusDeclaration);
     }
 
     public function testInstallerUsesConnectionApiForUniqueIndex(): void
