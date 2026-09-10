@@ -18,6 +18,35 @@ final class ProductCompetitorTableMetadataTest extends TestCase
         self::assertMatchesRegularExpression('/configurePrecision\(18\).*?configureScale\(2\)/s', $source);
         self::assertStringContainsString("ProductUrl::hash((string) \$fields['URL'])", $source);
         self::assertIsString($installer);
-        self::assertStringContainsString("['PRODUCT_ID', 'COMPETITOR_ID', 'URL_HASH'], true", $installer);
+        self::assertStringContainsString("['PRODUCT_ID', 'COMPETITOR_ID', 'URL_HASH']", $installer);
+    }
+
+    public function testProductCompetitorUsesRealBitrixOrmNamespaces(): void
+    {
+        $source = file_get_contents(__DIR__ . '/../../lib/Model/ProductCompetitorTable.php');
+
+        self::assertIsString($source);
+        self::assertStringNotContainsString('Bitrix\\MainORM\\', $source);
+        self::assertStringContainsString('Bitrix\\Main\\ORM\\Data\\DataManager', $source);
+        self::assertStringContainsString('Bitrix\\Main\\ORM\\Event', $source);
+        self::assertStringContainsString('Bitrix\\Main\\ORM\\EventResult', $source);
+        self::assertStringContainsString('Bitrix\\Main\\ORM\\Fields\\', $source);
+        self::assertStringContainsString('Bitrix\\Main\\ORM\\Fields\\Relations\\Reference', $source);
+        self::assertStringContainsString('Bitrix\\Main\\ORM\\Fields\\Validators\\LengthValidator', $source);
+        self::assertStringContainsString('Bitrix\\Main\\ORM\\Query\\Join', $source);
+    }
+
+    public function testInstallerUsesConnectionApiForUniqueIndex(): void
+    {
+        $installer = file_get_contents(__DIR__ . '/../../lib/Installer/SchemaInstaller.php');
+
+        self::assertIsString($installer);
+        self::assertStringNotContainsString('getCreateIndexSql', $installer);
+        self::assertStringContainsString('Bitrix\\Main\\DB\\Connection', $installer);
+        self::assertStringContainsString('Connection::INDEX_UNIQUE', $installer);
+        self::assertMatchesRegularExpression(
+            '/createIndex\(\$table, \$name, \$columns, null, \$type\)/',
+            $installer
+        );
     }
 }

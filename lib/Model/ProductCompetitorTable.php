@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace KK\PriceWatch\Model;
 
-use Bitrix\MainORM\Data\DataManager;
-use Bitrix\MainORM\Event;
-use Bitrix\MainORM\EventResult;
-use Bitrix\MainORM\Fields\BooleanField;
-use Bitrix\MainORM\Fields\DatetimeField;
-use Bitrix\MainORM\Fields\DecimalField;
-use Bitrix\MainORM\Fields\IntegerField;
-use Bitrix\MainORM\Fields\Relations\Reference;
-use Bitrix\MainORM\Fields\StringField;
-use Bitrix\MainORM\Fields\TextField;
-use Bitrix\MainORM\Fields\Validators\LengthValidator;
-use Bitrix\MainORM\Query\Join;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Event;
+use Bitrix\Main\ORM\EventResult;
+use Bitrix\Main\ORM\Fields\BooleanField;
+use Bitrix\Main\ORM\Fields\DatetimeField;
+use Bitrix\Main\ORM\Fields\DecimalField;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Fields\TextField;
+use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\Type\DateTime;
 use KK\PriceWatch\Collector\Money;
 
