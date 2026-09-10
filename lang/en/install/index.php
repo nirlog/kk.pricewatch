@@ -1,0 +1,5 @@
+<?php
+
+$MESS['KK_PRICEWATCH_MODULE_NAME'] = 'Price Watch';
+$MESS['KK_PRICEWATCH_MODULE_DESCRIPTION'] = 'Competitor price monitoring';
+$MESS['KK_PRICEWATCH_PARTNER_NAME'] = 'KK';

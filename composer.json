@@ -1,0 +1,25 @@
+{
+    "name": "kk/pricewatch",
+    "description": "Collector foundation for the kk.pricewatch Bitrix module",
+    "type": "bitrix-d7-module",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "KK\\PriceWatch\\": "lib/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "KK\\PriceWatch\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
