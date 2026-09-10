@@ -25,6 +25,22 @@ final class CompetitorAdminSourceTest extends TestCase
         self::assertFileExists(dirname(__DIR__, 2) . '/composer.lock');
     }
 
+    public function testUninstallDoesNotTreatProxyCleanupAsBooleanResult(): void
+    {
+        $installer = self::source('install/index.php');
+        self::assertDoesNotMatchRegularExpression('/if\s*\(\s*!\s*DeleteDirFiles\s*\(/', $installer);
+        self::assertStringContainsString("DeleteDirFiles(__DIR__ . '/admin', \$adminDirectory);", $installer);
+        self::assertStringContainsString("'kk_pricewatch_competitors.php'", $installer);
+        self::assertStringContainsString("'kk_pricewatch_competitor_edit.php'", $installer);
+        self::assertStringContainsString('is_file($proxyPath)', $installer);
+
+        $cleanupPosition = strpos($installer, 'DeleteDirFiles(');
+        $unregisterPosition = strpos($installer, 'ModuleManager::unRegisterModule(');
+        self::assertNotFalse($cleanupPosition);
+        self::assertNotFalse($unregisterPosition);
+        self::assertGreaterThan($cleanupPosition, $unregisterPosition);
+    }
+
     public function testMutationsArePermissionAndSessionProtected(): void
     {
         $edit = self::source('admin/competitor_edit.php');
@@ -43,7 +59,11 @@ final class CompetitorAdminSourceTest extends TestCase
         self::assertStringContainsString('$sortFields = [', $list);
         self::assertStringContainsString('in_array($sortField, $sortFields, true)', $list);
         self::assertStringContainsString('htmlspecialcharsbx((string) $item[\'NAME\'])', $list);
-        self::assertStringContainsString('new CAdminResult(', $list);
-        self::assertStringContainsString('NavStart()', $list);
+        self::assertStringContainsString("getPageNavigation('nav-kk-pricewatch-competitors')", $list);
+        self::assertStringContainsString('CompetitorTable::getCount($filter)', $list);
+        self::assertStringContainsString("'limit' => \$navigation->getLimit()", $list);
+        self::assertStringContainsString("'offset' => \$navigation->getOffset()", $list);
+        self::assertStringContainsString('setNavigation($navigation,', $list);
+        self::assertStringNotContainsString('NavStart()', $list);
     }
 }

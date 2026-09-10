@@ -40,14 +40,19 @@ $ormOrder = [$sortField => strtoupper($sortDirection)];
 foreach (['SORT', 'NAME', 'ID'] as $tieBreaker) {
     if (!isset($ormOrder[$tieBreaker])) $ormOrder[$tieBreaker] = 'ASC';
 }
+$navigation = $list->getPageNavigation('nav-kk-pricewatch-competitors');
+$navigation->allowAllRecords(false);
+$navigation->setRecordCount(CompetitorTable::getCount($filter));
+
 $query = CompetitorTable::getList([
     'select' => $sortFields,
     'filter' => $filter,
     'order' => $ormOrder,
+    'limit' => $navigation->getLimit(),
+    'offset' => $navigation->getOffset(),
 ]);
 $data = new CAdminResult($query, $tableId);
-$data->NavStart();
-$list->NavText($data->GetNavPrint(Loc::getMessage('KK_PRICEWATCH_LIST_NAV')));
+$list->setNavigation($navigation, Loc::getMessage('KK_PRICEWATCH_LIST_NAV'), false);
 $list->AddHeaders([
     ['id' => 'ID', 'content' => 'ID', 'sort' => 'ID', 'default' => true],
     ['id' => 'ACTIVE', 'content' => Loc::getMessage('KK_PRICEWATCH_FIELD_ACTIVE'), 'sort' => 'ACTIVE', 'default' => true],
