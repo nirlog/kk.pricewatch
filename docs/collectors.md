@@ -12,6 +12,14 @@ item must not prevent other batch items from succeeding. Prices must remain
 non-negative decimal strings and currencies uppercase three-letter codes; the
 success factory validates both without converting prices to floating point.
 
+Construct a completed, usable batch with `CollectorResponse::success($requestId,
+$items)`. Its global `success` remains true even when one or more item results
+are failures, and its serialized representation omits the global `error` field.
+Use `CollectorResponse::failure($requestId, $code, $message)` when the collector
+request itself fails, for example with `COLLECTOR_TIMEOUT`. A global failure has
+a structured `CollectorError` and an empty item collection; it is distinct from
+an expected error affecting only one item.
+
 ## Using the mock
 
 ```php

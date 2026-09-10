@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer:v2
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+      - name: Validate Composer configuration
+        run: composer validate
+      - name: Check PHP syntax
+        run: find . -path ./vendor -prune -o -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Run PHPUnit
+        run: vendor/bin/phpunit

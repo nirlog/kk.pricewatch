@@ -42,7 +42,7 @@ final class MockCollector implements CollectorInterface
     {
         $results = array_map(fn (CollectorItem $item): CollectorItemResult => $this->collectItem($item), $request->items);
 
-        return new CollectorResponse($request->schemaVersion, $request->requestId, true, $results);
+        return CollectorResponse::success($request->requestId, $results);
     }
 
     private function collectItem(CollectorItem $item): CollectorItemResult
