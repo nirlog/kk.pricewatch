@@ -2,6 +2,9 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use KK\PriceWatch\Installer\SchemaInstaller;
+
+require_once dirname(__DIR__) . '/include.php';
 
 Loc::loadMessages(__FILE__);
 
@@ -32,11 +35,13 @@ class kk_pricewatch extends CModule
 
     public function DoInstall(): void
     {
+        (new SchemaInstaller())->install();
         ModuleManager::registerModule($this->MODULE_ID);
     }
 
     public function DoUninstall(): void
     {
+        // Module-owned data is intentionally preserved for a safe reinstall.
         ModuleManager::unRegisterModule($this->MODULE_ID);
     }
 }
