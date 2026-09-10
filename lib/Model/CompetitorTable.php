@@ -29,10 +29,8 @@ final class CompetitorTable extends DataManager
             (new StringField('NAME'))
                 ->configureRequired()
                 ->configureSize(255)
-                ->configureValidation(static fn(): array => [
-                    static fn(string $value): bool|string => trim($value) !== '' ?: 'Competitor name must not be blank.',
-                    new LengthValidator(null, 255),
-                ]),
+                ->addValidator(static fn(string $value): bool|string => trim($value) !== '' ?: 'Competitor name must not be blank.')
+                ->addValidator(new LengthValidator(null, 255)),
             (new BooleanField('ACTIVE'))->configureValues('N', 'Y')->configureDefaultValue('Y'),
             (new IntegerField('SORT'))->configureDefaultValue(500),
             (new StringField('DOMAIN'))->configureNullable()->configureSize(255),
@@ -40,25 +38,23 @@ final class CompetitorTable extends DataManager
                 ->configureRequired()
                 ->configureSize(64)
                 ->configureDefaultValue(CollectorType::MOCK)
-                ->configureValidation(static fn(): array => [
-                    static fn(string $value): bool|string => CollectorType::isValid($value) ?: 'Unknown collector type.',
-                    new LengthValidator(null, 64),
-                ]),
+                ->addValidator(static fn(string $value): bool|string => CollectorType::isValid($value) ?: 'Unknown collector type.')
+                ->addValidator(new LengthValidator(null, 64)),
             (new StringField('COLLECTOR_HANDLER'))
                 ->configureNullable()
                 ->configureSize(512)
-                ->configureValidation(static fn(): array => [new LengthValidator(null, 512)]),
+                ->addValidator(new LengthValidator(null, 512)),
             (new TextField('COLLECTOR_OPTIONS'))
                 ->configureRequired()
                 ->configureDefaultValue('{}')
-                ->configureValidation(static fn(): array => [static function (string $value): bool|string {
+                ->addValidator(static function (string $value): bool|string {
                     try {
                         CollectorOptions::decode($value);
                         return true;
                     } catch (\InvalidArgumentException) {
                         return 'Collector options must be a valid JSON object.';
                     }
-                }]),
+                }),
             (new DatetimeField('CREATED_AT'))->configureRequired()->configureDefaultValue(static fn(): DateTime => new DateTime()),
             (new DatetimeField('UPDATED_AT'))->configureRequired()->configureDefaultValue(static fn(): DateTime => new DateTime()),
         ];
