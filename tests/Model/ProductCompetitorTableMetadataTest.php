@@ -45,6 +45,30 @@ final class ProductCompetitorTableMetadataTest extends TestCase
         self::assertStringContainsString('Bitrix\\Main\\ORM\\Query\\Join', $source);
     }
 
+    public function testCurrencyAndStatusDeclarePhysicalLengthsAndSemanticValidators(): void
+    {
+        $source = file_get_contents(__DIR__ . '/../../lib/Model/ProductCompetitorTable.php');
+
+        self::assertIsString($source);
+        $currencyStart = strpos($source, "new StringField('CURRENCY')");
+        $statusStart = strpos($source, "new StringField('STATUS')");
+        $errorCodeStart = strpos($source, "new StringField('ERROR_CODE')");
+
+        self::assertIsInt($currencyStart);
+        self::assertIsInt($statusStart);
+        self::assertIsInt($errorCodeStart);
+
+        $currencyDeclaration = substr($source, $currencyStart, $statusStart - $currencyStart);
+        $statusDeclaration = substr($source, $statusStart, $errorCodeStart - $statusStart);
+
+        self::assertStringContainsString('configureSize(3)', $currencyDeclaration);
+        self::assertStringContainsString('new LengthValidator(3, 3)', $currencyDeclaration);
+        self::assertStringContainsString('Money::assertCurrency($value)', $currencyDeclaration);
+        self::assertStringContainsString('configureSize(16)', $statusDeclaration);
+        self::assertStringContainsString('new LengthValidator(null, 16)', $statusDeclaration);
+        self::assertStringContainsString('CollectionStatus::isValid($value)', $statusDeclaration);
+    }
+
     public function testInstallerUsesConnectionApiForUniqueIndex(): void
     {
         $installer = file_get_contents(__DIR__ . '/../../lib/Installer/SchemaInstaller.php');

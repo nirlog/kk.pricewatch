@@ -50,6 +50,7 @@ final class ProductCompetitorTable extends DataManager
             (new StringField('CURRENCY'))
                 ->configureNullable()
                 ->configureSize(3)
+                ->addValidator(new LengthValidator(3, 3))
                 ->addValidator(static function (string $value): bool|string {
                     try {
                         Money::assertCurrency($value);
@@ -62,6 +63,7 @@ final class ProductCompetitorTable extends DataManager
                 ->configureRequired()
                 ->configureSize(16)
                 ->configureDefaultValue(CollectionStatus::NEW)
+                ->addValidator(new LengthValidator(null, 16))
                 ->addValidator(static fn(string $value): bool|string => CollectionStatus::isValid($value) ?: 'Unknown collection status.'),
             (new StringField('ERROR_CODE'))->configureNullable()->configureSize(64)
                 ->addValidator(new LengthValidator(null, 64)),
