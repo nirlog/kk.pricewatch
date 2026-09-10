@@ -44,7 +44,10 @@ final class CompetitorTable extends DataManager
                     static fn(string $value): bool|string => CollectorType::isValid($value) ?: 'Unknown collector type.',
                     new LengthValidator(null, 64),
                 ]),
-            (new StringField('COLLECTOR_HANDLER'))->configureNullable()->configureSize(512),
+            (new StringField('COLLECTOR_HANDLER'))
+                ->configureNullable()
+                ->configureSize(512)
+                ->configureValidation(static fn(): array => [new LengthValidator(null, 512)]),
             (new TextField('COLLECTOR_OPTIONS'))
                 ->configureRequired()
                 ->configureDefaultValue('{}')
