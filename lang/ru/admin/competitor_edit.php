@@ -1,0 +1,25 @@
+<?php
+$MESS['KK_PRICEWATCH_EDIT_TITLE'] = 'Редактирование конкурента';
+$MESS['KK_PRICEWATCH_EDIT_NEW_TITLE'] = 'Новый конкурент';
+$MESS['KK_PRICEWATCH_EDIT_TAB'] = 'Конкурент';
+$MESS['KK_PRICEWATCH_EDIT_TAB_TITLE'] = 'Параметры конкурента и коллектора';
+$MESS['KK_PRICEWATCH_EDIT_NOT_FOUND'] = 'Запрошенный конкурент не найден.';
+$MESS['KK_PRICEWATCH_EDIT_WRITE_DENIED'] = 'Недостаточно прав для изменения данных.';
+$MESS['KK_PRICEWATCH_EDIT_BAD_SESSID'] = 'Сессия истекла. Обновите страницу и повторите действие.';
+$MESS['KK_PRICEWATCH_EDIT_INVALID_OPTIONS'] = 'Параметры коллектора должны быть корректным JSON-объектом.';
+$MESS['KK_PRICEWATCH_EDIT_CONFIRM_DELETE'] = 'Удаление не подтверждено.';
+$MESS['KK_PRICEWATCH_EDIT_DELETE_REFERENCED'] = 'Конкурент используется в связях с товарами. Деактивируйте его или сначала удалите связи.';
+$MESS['KK_PRICEWATCH_EDIT_CREATED'] = 'Создан';
+$MESS['KK_PRICEWATCH_EDIT_UPDATED'] = 'Изменён';
+$MESS['KK_PRICEWATCH_EDIT_NAME'] = 'Название';
+$MESS['KK_PRICEWATCH_EDIT_ACTIVE'] = 'Активен';
+$MESS['KK_PRICEWATCH_EDIT_SORT'] = 'Сортировка';
+$MESS['KK_PRICEWATCH_EDIT_DOMAIN'] = 'Домен';
+$MESS['KK_PRICEWATCH_EDIT_DOMAIN_HINT'] = 'Справочное имя хоста, без изменения URL товаров.';
+$MESS['KK_PRICEWATCH_EDIT_TYPE'] = 'Тип коллектора';
+$MESS['KK_PRICEWATCH_EDIT_HANDLER'] = 'Обработчик';
+$MESS['KK_PRICEWATCH_EDIT_HANDLER_HINT'] = 'Общий путь или идентификатор обработчика.';
+$MESS['KK_PRICEWATCH_EDIT_OPTIONS'] = 'Параметры коллектора';
+$MESS['KK_PRICEWATCH_EDIT_OPTIONS_HINT'] = 'JSON-объект, например {}.';
+$MESS['KK_PRICEWATCH_EDIT_DELETE'] = 'Удалить конкурента';
+$MESS['KK_PRICEWATCH_EDIT_DELETE_CONFIRM_JS'] = 'Удалить этого конкурента?';

@@ -10,6 +10,7 @@ Loc::loadMessages(__FILE__);
 
 class kk_pricewatch extends CModule
 {
+    public $MODULE_GROUP_RIGHTS = 'Y';
     public $MODULE_ID = 'kk.pricewatch';
     public $MODULE_VERSION;
     public $MODULE_VERSION_DATE;
@@ -36,12 +37,30 @@ class kk_pricewatch extends CModule
     public function DoInstall(): void
     {
         (new SchemaInstaller())->install();
+        if (!CopyDirFiles(__DIR__ . '/admin', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin', true, true)) {
+            throw new RuntimeException('Could not install kk.pricewatch admin entry points.');
+        }
         ModuleManager::registerModule($this->MODULE_ID);
     }
 
     public function DoUninstall(): void
     {
+        if (!DeleteDirFiles(__DIR__ . '/admin', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin')) {
+            throw new RuntimeException('Could not remove kk.pricewatch admin entry points.');
+        }
         // Module-owned data is intentionally preserved for a safe reinstall.
         ModuleManager::unRegisterModule($this->MODULE_ID);
+    }
+
+    public function GetModuleRightList(): array
+    {
+        return [
+            'reference_id' => ['D', 'R', 'W'],
+            'reference' => [
+                Loc::getMessage('KK_PRICEWATCH_RIGHT_D'),
+                Loc::getMessage('KK_PRICEWATCH_RIGHT_R'),
+                Loc::getMessage('KK_PRICEWATCH_RIGHT_W'),
+            ],
+        ];
     }
 }
