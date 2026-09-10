@@ -8,10 +8,10 @@ Normal uninstall preserves both module tables and their rows.
 
 ## Manual Bitrix verification
 
-On a development Bitrix installation:
+On a development Bitrix installation, use a clean recreation of the module-owned tables. The installer intentionally preserves existing tables and does not alter their columns, so an existing `varchar(255)` column will not be corrected automatically. Uninstall the module if needed, remove the preserved tables only when safe in this development environment, and install the module again.
 
-1. Install, then reinstall the module and confirm both module tables exist without data loss.
-2. Inspect `b_kk_pricewatch_product_competitor`: confirm `URL` and `ERROR_MESSAGE` are text-capable, `URL_HASH` is 64 characters, and `CURRENT_PRICE` is physically equivalent to `DECIMAL(18,2)`.
+1. Confirm module installation completes without errors and both module tables exist.
+2. Run `SHOW CREATE TABLE b_kk_pricewatch_product_competitor`. Confirm `CURRENCY` is `varchar(3) DEFAULT NULL`, `STATUS` is `varchar(16) NOT NULL`, `URL` and `ERROR_MESSAGE` are text-capable, `URL_HASH` is `varchar(64)`, and `CURRENT_PRICE` is physically equivalent to `DECIMAL(18,2)`.
 3. Confirm the deterministically named `ux_kk_pw_pc_identity` index is **unique** and contains `PRODUCT_ID, COMPETITOR_ID, URL_HASH`; also confirm the `ix_kk_pw_pc_product` and `ix_kk_pw_pc_competitor` lookup indexes exist. Bitrix's cross-database `isIndexExists()` check establishes that an index covers the requested columns but does not establish uniqueness, so the installer does not destructively replace an existing same-column index. A clean install creates `ux_kk_pw_pc_identity` as unique through the Bitrix connection API.
 4. Add a row with a long URL/query string and confirm the URL round-trips exactly, `URL_HASH` equals SHA-256 of those exact bytes, and defaults are `ACTIVE=Y`, `STATUS=new`, with both timestamps populated.
 5. Confirm the exact duplicate is rejected, while the same product and competitor with a different exact URL succeeds.

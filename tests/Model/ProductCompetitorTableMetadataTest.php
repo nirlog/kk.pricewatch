@@ -45,6 +45,21 @@ final class ProductCompetitorTableMetadataTest extends TestCase
         self::assertStringContainsString('Bitrix\\Main\\ORM\\Query\\Join', $source);
     }
 
+    public function testCurrencyAndStatusDeclarePhysicalLengthsAndSemanticValidators(): void
+    {
+        $source = file_get_contents(__DIR__ . '/../../lib/Model/ProductCompetitorTable.php');
+
+        self::assertIsString($source);
+        self::assertMatchesRegularExpression(
+            '/new StringField\\(\'CURRENCY\'\\).*?configureSize\\(3\\).*?new LengthValidator\\(3, 3\\).*?Money::assertCurrency\\(\\$value\\)/s',
+            $source
+        );
+        self::assertMatchesRegularExpression(
+            '/new StringField\\(\'STATUS\'\\).*?configureSize\\(16\\).*?new LengthValidator\\(null, 16\\).*?CollectionStatus::isValid\\(\\$value\\)/s',
+            $source
+        );
+    }
+
     public function testInstallerUsesConnectionApiForUniqueIndex(): void
     {
         $installer = file_get_contents(__DIR__ . '/../../lib/Installer/SchemaInstaller.php');
