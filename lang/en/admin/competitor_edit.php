@@ -1,0 +1,25 @@
+<?php
+$MESS['KK_PRICEWATCH_EDIT_TITLE'] = 'Edit competitor';
+$MESS['KK_PRICEWATCH_EDIT_NEW_TITLE'] = 'New competitor';
+$MESS['KK_PRICEWATCH_EDIT_TAB'] = 'Competitor';
+$MESS['KK_PRICEWATCH_EDIT_TAB_TITLE'] = 'Competitor and collector settings';
+$MESS['KK_PRICEWATCH_EDIT_NOT_FOUND'] = 'The requested competitor was not found.';
+$MESS['KK_PRICEWATCH_EDIT_WRITE_DENIED'] = 'Write access is required.';
+$MESS['KK_PRICEWATCH_EDIT_BAD_SESSID'] = 'The session has expired. Refresh the page and try again.';
+$MESS['KK_PRICEWATCH_EDIT_INVALID_OPTIONS'] = 'Collector options must be a valid JSON object.';
+$MESS['KK_PRICEWATCH_EDIT_CONFIRM_DELETE'] = 'Deletion was not confirmed.';
+$MESS['KK_PRICEWATCH_EDIT_DELETE_REFERENCED'] = 'This competitor is used by product links. Deactivate it or remove the links first.';
+$MESS['KK_PRICEWATCH_EDIT_CREATED'] = 'Created';
+$MESS['KK_PRICEWATCH_EDIT_UPDATED'] = 'Modified';
+$MESS['KK_PRICEWATCH_EDIT_NAME'] = 'Name';
+$MESS['KK_PRICEWATCH_EDIT_ACTIVE'] = 'Active';
+$MESS['KK_PRICEWATCH_EDIT_SORT'] = 'Sort';
+$MESS['KK_PRICEWATCH_EDIT_DOMAIN'] = 'Domain';
+$MESS['KK_PRICEWATCH_EDIT_DOMAIN_HINT'] = 'Informational hostname; product URLs are not changed.';
+$MESS['KK_PRICEWATCH_EDIT_TYPE'] = 'Collector type';
+$MESS['KK_PRICEWATCH_EDIT_HANDLER'] = 'Handler';
+$MESS['KK_PRICEWATCH_EDIT_HANDLER_HINT'] = 'Generic handler path or identifier.';
+$MESS['KK_PRICEWATCH_EDIT_OPTIONS'] = 'Collector options';
+$MESS['KK_PRICEWATCH_EDIT_OPTIONS_HINT'] = 'A JSON object, for example {}.';
+$MESS['KK_PRICEWATCH_EDIT_DELETE'] = 'Delete competitor';
+$MESS['KK_PRICEWATCH_EDIT_DELETE_CONFIRM_JS'] = 'Delete this competitor?';
