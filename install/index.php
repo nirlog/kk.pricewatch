@@ -5,6 +5,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\EventManager;
 use KK\PriceWatch\Admin\ProductEditTabHandler;
 use KK\PriceWatch\Installer\SchemaInstaller;
+use KK\PriceWatch\Agent\PriceUpdateAgent;
 
 require_once dirname(__DIR__) . '/include.php';
 
@@ -43,6 +44,7 @@ class kk_pricewatch extends CModule
             throw new RuntimeException('Could not install kk.pricewatch admin entry points.');
         }
         ModuleManager::registerModule($this->MODULE_ID);
+        $this->ensureScheduledAgent();
         $events = EventManager::getInstance();
         $events->unRegisterEventHandler('main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin');
         $events->registerEventHandler('main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin');
@@ -50,6 +52,7 @@ class kk_pricewatch extends CModule
 
     public function DoUninstall(): void
     {
+        CAgent::RemoveAgent(PriceUpdateAgent::INVOCATION, $this->MODULE_ID);
         EventManager::getInstance()->unRegisterEventHandler(
             'main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin'
         );
@@ -72,6 +75,34 @@ class kk_pricewatch extends CModule
 
         // Module-owned data is intentionally preserved for a safe reinstall.
         ModuleManager::unRegisterModule($this->MODULE_ID);
+    }
+
+    private function ensureScheduledAgent(): void
+    {
+        $by = 'ID';
+        $order = 'ASC';
+        $agents = CAgent::GetList($by, $order, [
+            'MODULE_ID' => $this->MODULE_ID,
+            'NAME' => PriceUpdateAgent::INVOCATION,
+        ]);
+        $existing = $agents->Fetch();
+        if (!$existing) {
+            CAgent::AddAgent(
+                PriceUpdateAgent::INVOCATION,
+                $this->MODULE_ID,
+                'N',
+                3600,
+                '',
+                'N'
+            );
+            return;
+        }
+
+        // Repair historical/repeated-install duplicates without changing the
+        // retained agent's administrator-controlled ACTIVE state.
+        while ($duplicate = $agents->Fetch()) {
+            CAgent::Delete((int) $duplicate['ID']);
+        }
     }
 
     public function GetModuleRightList(): array
