@@ -2,6 +2,8 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\EventManager;
+use KK\PriceWatch\Admin\ProductEditTabHandler;
 use KK\PriceWatch\Installer\SchemaInstaller;
 
 require_once dirname(__DIR__) . '/include.php';
@@ -41,14 +43,25 @@ class kk_pricewatch extends CModule
             throw new RuntimeException('Could not install kk.pricewatch admin entry points.');
         }
         ModuleManager::registerModule($this->MODULE_ID);
+        $events = EventManager::getInstance();
+        $events->unRegisterEventHandler('main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin');
+        $events->registerEventHandler('main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin');
     }
 
     public function DoUninstall(): void
     {
+        EventManager::getInstance()->unRegisterEventHandler(
+            'main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin'
+        );
         $adminDirectory = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin';
         DeleteDirFiles(__DIR__ . '/admin', $adminDirectory);
 
-        foreach (['kk_pricewatch_competitors.php', 'kk_pricewatch_competitor_edit.php'] as $proxyFile) {
+        foreach ([
+            'kk_pricewatch_competitors.php',
+            'kk_pricewatch_competitor_edit.php',
+            'kk_pricewatch_product_competitors.php',
+            'kk_pricewatch_product_competitor_edit.php',
+        ] as $proxyFile) {
             $proxyPath = $adminDirectory . '/' . $proxyFile;
             clearstatcache(true, $proxyPath);
             if (is_file($proxyPath)) {
