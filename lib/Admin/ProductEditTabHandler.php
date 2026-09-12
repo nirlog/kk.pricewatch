@@ -11,6 +11,7 @@ use KK\PriceWatch\Model\ProductCompetitorTable;
 
 final class ProductEditTabHandler
 {
+    private const TAB_ID = 'kk_pricewatch_product_competitors';
     private const SUPPORTED_SCRIPTS = ['iblock_element_edit.php', 'cat_product_edit.php'];
 
     public static function onAdminTabControlBegin(\CAdminTabControl &$tabControl): void
@@ -28,17 +29,31 @@ final class ProductEditTabHandler
 
         $request = Context::getCurrent()->getRequest();
         $productId = (int) $request->get('ID');
-        if ($productId <= 0 || ProductContext::find($productId) === null) {
+        if ($productId <= 0 || ProductContext::findCatalogProduct($productId) === null) {
             return;
         }
 
         Loc::loadMessages(__FILE__);
-        $tabControl->AddTabs([[
-            'DIV' => 'kk_pricewatch_product_competitors',
+        self::appendTab($tabControl, [
+            'DIV' => self::TAB_ID,
             'TAB' => Loc::getMessage('KK_PRICEWATCH_PRODUCT_TAB'),
             'TITLE' => Loc::getMessage('KK_PRICEWATCH_PRODUCT_TAB_TITLE'),
             'CONTENT' => self::render($productId, Access::canWrite()),
-        ]]);
+        ]);
+    }
+
+    /** @param array<string, mixed> $tab */
+    private static function appendTab(\CAdminTabControl $tabControl, array $tab): void
+    {
+        foreach ($tabControl->tabs as $existingTab) {
+            if (is_array($existingTab) && ($existingTab['DIV'] ?? null) === self::TAB_ID) {
+                return;
+            }
+        }
+
+        // CAdminTabControl::AddTabs() accepts a CAdminTabEngine, not a tab array.
+        // The supported legacy API exposes this collection publicly.
+        $tabControl->tabs[] = $tab;
     }
 
     private static function render(int $productId, bool $canWrite): string
@@ -56,7 +71,8 @@ final class ProductEditTabHandler
 
         ob_start();
         ?>
-        <div class="adm-detail-content-item-block">
+        <tr>
+        <td colspan="2">
             <?php if ($rows === []): ?>
                 <p><?= htmlspecialcharsbx((string) Loc::getMessage('KK_PRICEWATCH_PRODUCT_TAB_EMPTY')) ?></p>
             <?php else: ?>
@@ -83,7 +99,8 @@ final class ProductEditTabHandler
                 </tbody></table>
             <?php endif; ?>
             <p><a class="adm-btn<?= $canWrite ? ' adm-btn-save' : '' ?>" href="<?= htmlspecialcharsbx($listUrl) ?>"><?= htmlspecialcharsbx((string) Loc::getMessage($canWrite ? 'KK_PRICEWATCH_PRODUCT_MANAGE' : 'KK_PRICEWATCH_PRODUCT_VIEW')) ?></a></p>
-        </div>
+        </td>
+        </tr>
         <?php
         return (string) ob_get_clean();
     }

@@ -31,10 +31,33 @@ final class ProductCompetitorAdminSourceTest extends TestCase
         $handler = self::source('lib/Admin/ProductEditTabHandler.php');
         self::assertStringContainsString('Access::canRead()', $handler);
         self::assertStringContainsString('SUPPORTED_SCRIPTS', $handler);
-        self::assertStringContainsString('ProductContext::find', $handler);
+        self::assertStringContainsString('ProductContext::findCatalogProduct', $handler);
         self::assertStringContainsString("'CONTENT'", $handler);
         self::assertStringNotContainsString('<form', $handler);
         self::assertStringContainsString('htmlspecialcharsbx', $handler);
+        self::assertStringNotContainsString('->AddTabs(', $handler);
+        self::assertStringContainsString('$tabControl->tabs[] = $tab', $handler);
+        self::assertStringContainsString("private const TAB_ID = 'kk_pricewatch_product_competitors'", $handler);
+        self::assertStringContainsString("(\$existingTab['DIV'] ?? null) === self::TAB_ID", $handler);
+        self::assertMatchesRegularExpression('/<tr>\s*<td colspan="2">/', $handler);
+        self::assertDoesNotMatchRegularExpression('/<div[^>]*>\s*<tr>/', $handler);
+    }
+
+    public function testCatalogProductContextIsRequiredAtEveryAdminBoundary(): void
+    {
+        $context = self::source('lib/Admin/ProductContext.php');
+        self::assertStringContainsString('Bitrix\\Catalog\\ProductTable', $context);
+        self::assertStringContainsString("Loader::includeModule('catalog')", $context);
+        self::assertStringContainsString('ProductTable::getByPrimary($productId', $context);
+
+        foreach ([
+            'lib/Admin/ProductEditTabHandler.php',
+            'lib/Admin/ProductCompetitorLinkService.php',
+            'admin/product_competitors.php',
+            'admin/product_competitor_edit.php',
+        ] as $path) {
+            self::assertStringContainsString('ProductContext::findCatalogProduct($productId)', self::source($path), $path);
+        }
     }
 
     public function testMutationBoundaryIsProtectedAndExact(): void
@@ -48,7 +71,7 @@ final class ProductCompetitorAdminSourceTest extends TestCase
         self::assertStringContainsString("'CURRENT_PRICE' => null", $service);
         self::assertStringContainsString("'LAST_SUCCESS_AT' => null", $service);
         self::assertStringContainsString('ProductUrl::hash($exactUrl)', $service);
-        self::assertStringContainsString('ProductContext::find($productId)', $service);
+        self::assertStringContainsString('ProductContext::findCatalogProduct($productId)', $service);
         self::assertStringContainsString('CompetitorTable::getByPrimary', $service);
     }
 }

@@ -14,7 +14,7 @@ if (!Loader::includeModule('kk.pricewatch') || !Access::canRead()) {
 }
 Loc::loadMessages(__FILE__);
 $productId = (int) Context::getCurrent()->getRequest()->get('PRODUCT_ID');
-$product = ProductContext::find($productId);
+$product = ProductContext::findCatalogProduct($productId);
 if ($product === null) {
     $APPLICATION->AuthForm(Loc::getMessage('KK_PRICEWATCH_PRODUCT_LIST_INVALID_PRODUCT'));
 }
