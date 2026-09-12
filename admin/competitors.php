@@ -15,7 +15,7 @@ if (!Loader::includeModule('kk.pricewatch') || !Access::canRead()) {
 Loc::loadMessages(__FILE__);
 $tableId = 'kk_pricewatch_competitors';
 $sort = new CAdminSorting($tableId, 'SORT', 'asc');
-$list = new CAdminList($tableId, $sort);
+$list = new CAdminUiList($tableId, $sort);
 
 $sortFields = ['ID', 'ACTIVE', 'SORT', 'NAME', 'DOMAIN', 'COLLECTOR_TYPE', 'COLLECTOR_HANDLER', 'UPDATED_AT'];
 $sortField = strtoupper((string) ($by ?? 'SORT'));

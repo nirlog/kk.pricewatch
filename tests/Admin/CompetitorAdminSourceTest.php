@@ -56,6 +56,7 @@ final class CompetitorAdminSourceTest extends TestCase
     public function testListWhitelistsSortingAndEscapesValues(): void
     {
         $list = self::source('admin/competitors.php');
+        self::assertStringContainsString('new CAdminUiList($tableId, $sort)', $list);
         self::assertStringContainsString('$sortFields = [', $list);
         self::assertStringContainsString('in_array($sortField, $sortFields, true)', $list);
         self::assertStringContainsString('htmlspecialcharsbx((string) $item[\'NAME\'])', $list);
