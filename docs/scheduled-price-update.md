@@ -32,6 +32,23 @@ automatic crontab modification.
 
 ## Real-Bitrix 0.8.0 smoke checklist
 
+### Marketplace update package
+
+`install/updates/<version>/updater.php` is the version-controlled source for the
+Bitrix update hook; Bitrix does not discover or execute that nested file directly.
+Build the Marketplace update archive with:
+
+```bash
+php bin/build-update-package.php 0.8.0 build/0.8.0.tar.gz
+```
+
+The builder copies the versioned template to `updater.php` at the archive root,
+where the Bitrix update lifecycle expects it, and includes the module runtime
+files at their module-relative paths. Do not publish an archive assembled by a
+generic repository archiver: an archive without the root `updater.php` will not
+install the scheduled agent during a 0.7.0 to 0.8.0 upgrade. CI opens the built
+archive and verifies this layout.
+
 Record the Bitrix/PHP versions, database engine, date, batch size, relevant link
 IDs, and adapter. Verify:
 

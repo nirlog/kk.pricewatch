@@ -9,7 +9,7 @@ use Throwable;
 
 final class PriceUpdateAgent
 {
-    public const INVOCATION = '\\KK\\PriceWatch\\Agent\\PriceUpdateAgent::run();';
+    public const INVOCATION = '\\' . self::class . '::run();';
 
     public static function run(): string
     {
