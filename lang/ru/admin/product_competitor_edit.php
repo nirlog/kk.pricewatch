@@ -1,4 +1,5 @@
 <?php
+$MESS['KK_PRICEWATCH_LINK_CHECK_PRICE'] = 'Проверить цену';
 $MESS['KK_PRICEWATCH_LINK_INVALID_PRODUCT'] = 'Товар не существует.';
 $MESS['KK_PRICEWATCH_LINK_NOT_FOUND'] = 'Ссылка конкурента для этого товара не найдена.';
 $MESS['KK_PRICEWATCH_LINK_WRITE_DENIED'] = 'Необходимо право на запись.';

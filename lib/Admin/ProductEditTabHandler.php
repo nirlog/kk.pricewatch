@@ -68,6 +68,8 @@ final class ProductEditTabHandler
         ])->fetchAll();
         $listUrl = 'kk_pricewatch_product_competitors.php?lang=' . rawurlencode((string) LANGUAGE_ID)
             . '&PRODUCT_ID=' . $productId;
+        $checkUrl = 'kk_pricewatch_product_price_check.php?lang=' . rawurlencode((string) LANGUAGE_ID)
+            . '&MODE=product&PRODUCT_ID=' . $productId;
 
         ob_start();
         ?>
@@ -99,6 +101,7 @@ final class ProductEditTabHandler
                 </tbody></table>
             <?php endif; ?>
             <p><a class="adm-btn<?= $canWrite ? ' adm-btn-save' : '' ?>" href="<?= htmlspecialcharsbx($listUrl) ?>"><?= htmlspecialcharsbx((string) Loc::getMessage($canWrite ? 'KK_PRICEWATCH_PRODUCT_MANAGE' : 'KK_PRICEWATCH_PRODUCT_VIEW')) ?></a></p>
+            <?php if ($canWrite): ?><p><a class="adm-btn" href="<?= htmlspecialcharsbx($checkUrl) ?>"><?= htmlspecialcharsbx((string) Loc::getMessage('KK_PRICEWATCH_PRODUCT_CHECK_ACTIVE')) ?></a></p><?php endif; ?>
         </td>
         </tr>
         <?php

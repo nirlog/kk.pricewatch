@@ -67,10 +67,15 @@ while ($item = $data->Fetch()) {
     foreach (['ACTIVE', 'CURRENT_PRICE', 'CURRENCY', 'STATUS', 'LAST_CHECK_AT', 'LAST_SUCCESS_AT', 'UPDATED_AT'] as $field) {
         $row->AddViewField($field, htmlspecialcharsbx((string) $item[$field]));
     }
+    if (Access::canWrite()) {
+        $checkUrl = 'kk_pricewatch_product_price_check.php?lang=' . LANGUAGE_ID . '&MODE=link&PRODUCT_ID=' . $productId . '&LINK_ID=' . $id;
+        $row->AddActions([['TEXT' => Loc::getMessage('KK_PRICEWATCH_PRODUCT_LIST_CHECK_LINK'), 'ACTION' => 'window.location.href=' . CUtil::PhpToJSObject($checkUrl)]]);
+    }
 }
 $menu = [];
 if (Access::canWrite()) {
     $menu[] = ['TEXT' => Loc::getMessage('KK_PRICEWATCH_PRODUCT_LIST_ADD'), 'LINK' => 'kk_pricewatch_product_competitor_edit.php?lang=' . LANGUAGE_ID . '&PRODUCT_ID=' . $productId, 'ICON' => 'btn_new'];
+    $menu[] = ['TEXT' => Loc::getMessage('KK_PRICEWATCH_PRODUCT_LIST_CHECK_PRODUCT'), 'LINK' => 'kk_pricewatch_product_price_check.php?lang=' . LANGUAGE_ID . '&MODE=product&PRODUCT_ID=' . $productId];
 }
 $list->AddAdminContextMenu($menu);
 $list->CheckListMode();
