@@ -28,10 +28,19 @@ final class SchedulingSourceTest extends TestCase
     {
         $root = dirname(__DIR__, 2);
         $installer = file_get_contents($root . '/install/index.php');
-        self::assertStringContainsString('PriceUpdateAgent::INVOCATION', $installer);
-        self::assertStringContainsString("'N',\n                3600", $installer);
-        self::assertStringContainsString("3600,\n                '',\n                'N'", $installer);
-        self::assertStringContainsString('CAgent::RemoveAgent(PriceUpdateAgent::INVOCATION', $installer);
+        $lifecycle = file_get_contents($root . '/lib/Installer/ScheduledAgentInstaller.php');
+        $upgrade = file_get_contents($root . '/install/updates/0.8.0/updater.php');
+
+        self::assertStringContainsString('(new ScheduledAgentInstaller())->install()', $installer);
+        self::assertStringContainsString('(new ScheduledAgentInstaller())->uninstall()', $installer);
+        self::assertStringContainsString("CAgent::GetList(\n            ['ID' => 'ASC'],\n            ['MODULE_ID' => self::MODULE_ID, '=NAME' => PriceUpdateAgent::INVOCATION]", $lifecycle);
+        self::assertStringNotContainsString("'NAME' => PriceUpdateAgent::INVOCATION", $lifecycle);
+        self::assertSame(1, substr_count($lifecycle, 'CAgent::Delete('));
+        self::assertStringContainsString("'N',\n                3600", $lifecycle);
+        self::assertStringContainsString("3600,\n                '',\n                'N'", $lifecycle);
+        self::assertStringContainsString('CAgent::RemoveAgent(PriceUpdateAgent::INVOCATION, self::MODULE_ID)', $lifecycle);
+        self::assertStringContainsString('(new ScheduledAgentInstaller())->install()', $upgrade);
+        self::assertStringNotContainsString('CAgent::', $upgrade);
         self::assertStringContainsString("'VERSION' => '0.8.0'", file_get_contents($root . '/install/version.php'));
     }
 }
