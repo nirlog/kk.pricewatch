@@ -32,7 +32,7 @@ final class ProductCompetitorLinkService
 
     public function save(int $productId, int $competitorId, string $exactUrl, string $active, ?int $id = null): int
     {
-        if (ProductContext::find($productId) === null) {
+        if (ProductContext::findCatalogProduct($productId) === null) {
             throw new DomainException('PRODUCT_NOT_FOUND');
         }
         if (!self::isAcceptedHttpUrl($exactUrl)) {
