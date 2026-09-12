@@ -45,9 +45,17 @@ class kk_pricewatch extends CModule
 
     public function DoUninstall(): void
     {
-        if (!DeleteDirFiles(__DIR__ . '/admin', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin')) {
-            throw new RuntimeException('Could not remove kk.pricewatch admin entry points.');
+        $adminDirectory = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin';
+        DeleteDirFiles(__DIR__ . '/admin', $adminDirectory);
+
+        foreach (['kk_pricewatch_competitors.php', 'kk_pricewatch_competitor_edit.php'] as $proxyFile) {
+            $proxyPath = $adminDirectory . '/' . $proxyFile;
+            clearstatcache(true, $proxyPath);
+            if (is_file($proxyPath)) {
+                throw new RuntimeException('Could not remove kk.pricewatch admin entry point: ' . $proxyFile);
+            }
         }
+
         // Module-owned data is intentionally preserved for a safe reinstall.
         ModuleManager::unRegisterModule($this->MODULE_ID);
     }
