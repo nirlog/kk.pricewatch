@@ -55,7 +55,7 @@ final class PriceUpdateServiceSourceTest extends TestCase
         $method = self::compact(self::method('updateLinks'));
         self::assertStringContainsString('$competitorIds = array_values(array_unique(', $method);
         self::assertMatchesRegularExpression('/CompetitorTable::getList\s*\(\s*\[\s*[\'\"]filter[\'\"]\s*=>\s*\[\s*[\'\"]@ID[\'\"]\s*=>\s*\$competitorIds/', $method);
-        self::assertSame(1, substr_count($method, 'CompetitorTable::getList('));
+        self::assertSame(1, preg_match_all('/(?<![A-Za-z0-9_])CompetitorTable::getList\s*\(/', $method));
         self::assertStringContainsString('$groups[(int) $link[\'COMPETITOR_ID\']][] = $link', $method);
         self::assertMatchesRegularExpression('/foreach\s*\(\$groups\s+as\s+\$competitorId\s*=>\s*\$group\).*\$this->processGroup\(\$competitors\[\$competitorId\],\s*\$group\)/s', $method);
         self::assertSame(1, substr_count($method, '$this->processGroup('));
