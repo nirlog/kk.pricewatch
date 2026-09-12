@@ -15,7 +15,7 @@ use KK\PriceWatch\Model\CompetitorTable;
 use KK\PriceWatch\Model\ProductCompetitorTable;
 use Throwable;
 
-final class PriceUpdateService
+final class PriceUpdateService implements PriceUpdateServiceInterface
 {
     private const GENERIC_ERROR = 'The collector could not process this competitor configuration.';
     private const INVALID_RESPONSE = 'The collector returned an invalid response.';

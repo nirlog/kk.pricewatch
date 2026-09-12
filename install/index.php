@@ -5,6 +5,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\EventManager;
 use KK\PriceWatch\Admin\ProductEditTabHandler;
 use KK\PriceWatch\Installer\SchemaInstaller;
+use KK\PriceWatch\Installer\ScheduledAgentInstaller;
 
 require_once dirname(__DIR__) . '/include.php';
 
@@ -43,6 +44,7 @@ class kk_pricewatch extends CModule
             throw new RuntimeException('Could not install kk.pricewatch admin entry points.');
         }
         ModuleManager::registerModule($this->MODULE_ID);
+        (new ScheduledAgentInstaller())->install();
         $events = EventManager::getInstance();
         $events->unRegisterEventHandler('main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin');
         $events->registerEventHandler('main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin');
@@ -50,6 +52,7 @@ class kk_pricewatch extends CModule
 
     public function DoUninstall(): void
     {
+        (new ScheduledAgentInstaller())->uninstall();
         EventManager::getInstance()->unRegisterEventHandler(
             'main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin'
         );
