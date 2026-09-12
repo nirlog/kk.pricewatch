@@ -23,7 +23,7 @@ final class ProductCompetitorAdminSourceTest extends TestCase
         self::assertStringNotContainsString('if (!DeleteDirFiles', $installer);
         self::assertFileExists(dirname(__DIR__, 2) . '/install/admin/kk_pricewatch_product_competitors.php');
         self::assertFileExists(dirname(__DIR__, 2) . '/install/admin/kk_pricewatch_product_competitor_edit.php');
-        self::assertStringContainsString("'VERSION' => '0.5.0'", self::source('install/version.php'));
+        self::assertStringContainsString("'VERSION' => '0.6.0'", self::source('install/version.php'));
     }
 
     public function testTabIsReadOnlyAndRestricted(): void
