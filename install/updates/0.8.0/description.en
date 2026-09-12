@@ -1,0 +1,2 @@
+<p>Adds scheduled batch price updates with an inactive-by-default Bitrix agent and a cron-compatible CLI entry point.</p>
+<p>Existing product and competitor data is preserved.</p>

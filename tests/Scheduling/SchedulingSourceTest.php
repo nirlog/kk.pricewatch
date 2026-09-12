@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace KK\PriceWatch\Tests\Scheduling;
 
+use KK\PriceWatch\Agent\PriceUpdateAgent;
 use PHPUnit\Framework\TestCase;
 
 final class SchedulingSourceTest extends TestCase
 {
+    public function testAgentInvocationUsesExactlyOneLeadingNamespaceSeparator(): void
+    {
+        self::assertSame('\\' . PriceUpdateAgent::class . '::run();', PriceUpdateAgent::INVOCATION);
+    }
+
     public function testOrmSelectionAndAdaptersRemainNarrow(): void
     {
         $root = dirname(__DIR__, 2);
@@ -40,6 +46,7 @@ final class SchedulingSourceTest extends TestCase
         self::assertStringContainsString("3600,\n                '',\n                'N'", $lifecycle);
         self::assertStringContainsString('CAgent::RemoveAgent(PriceUpdateAgent::INVOCATION, self::MODULE_ID)', $lifecycle);
         self::assertStringContainsString('(new ScheduledAgentInstaller())->install()', $upgrade);
+        self::assertStringContainsString("is_file(__DIR__ . '/include.php')", $upgrade);
         self::assertStringNotContainsString('CAgent::', $upgrade);
         self::assertStringContainsString("'VERSION' => '0.8.0'", file_get_contents($root . '/install/version.php'));
     }
