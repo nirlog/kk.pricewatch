@@ -1,5 +1,12 @@
 # Manual price check admin smoke test
 
+## Verification status
+
+- Module version: `0.7.0`.
+- Automated CI: passed.
+- Real-Bitrix smoke test: passed.
+- Manual admin execution: verified.
+
 Run this checklist after installing module version `0.7.0` on the supported real
 Bitrix development instance. Record the Bitrix version, PHP version, database
 engine, test date, user/right used for each permission check, and the relevant
