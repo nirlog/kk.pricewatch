@@ -61,6 +61,7 @@ class kk_pricewatch extends CModule
             'kk_pricewatch_competitor_edit.php',
             'kk_pricewatch_product_competitors.php',
             'kk_pricewatch_product_competitor_edit.php',
+            'kk_pricewatch_product_price_check.php',
         ] as $proxyFile) {
             $proxyPath = $adminDirectory . '/' . $proxyFile;
             clearstatcache(true, $proxyPath);

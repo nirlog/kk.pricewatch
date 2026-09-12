@@ -1,4 +1,5 @@
 <?php
+$MESS['KK_PRICEWATCH_LINK_CHECK_PRICE'] = 'Check price';
 $MESS['KK_PRICEWATCH_LINK_INVALID_PRODUCT'] = 'The product does not exist.';
 $MESS['KK_PRICEWATCH_LINK_NOT_FOUND'] = 'The competitor link was not found for this product.';
 $MESS['KK_PRICEWATCH_LINK_WRITE_DENIED'] = 'Write permission is required.';

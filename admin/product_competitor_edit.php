@@ -89,6 +89,9 @@ $tabs = [['DIV' => 'main', 'TAB' => Loc::getMessage('KK_PRICEWATCH_LINK_TAB'), '
 $form = new CAdminTabControl('kk_pricewatch_product_competitor_form', $tabs);
 ?>
 <p><?= htmlspecialcharsbx((string) Loc::getMessage('KK_PRICEWATCH_LINK_CONTEXT', ['#NAME#' => $product['NAME'], '#ID#' => $productId])) ?></p>
+<?php if ($canWrite && $record): ?>
+<p><a class="adm-btn" href="<?= htmlspecialcharsbx('kk_pricewatch_product_price_check.php?lang=' . LANGUAGE_ID . '&MODE=link&PRODUCT_ID=' . $productId . '&LINK_ID=' . $id) ?>"><?= htmlspecialcharsbx((string) Loc::getMessage('KK_PRICEWATCH_LINK_CHECK_PRICE')) ?></a></p>
+<?php endif; ?>
 <?php if ($record !== null || $id === 0): ?>
 <form method="post" action="<?= htmlspecialcharsbx($APPLICATION->GetCurPageParam('', ['action'])) ?>">
 <?= bitrix_sessid_post() ?><input type="hidden" name="action" value="save">

@@ -13,3 +13,5 @@ $MESS['KK_PRICEWATCH_PRODUCT_LIST_OPEN'] = 'Открыть ссылку';
 $MESS['KK_PRICEWATCH_PRODUCT_LIST_ADD'] = 'Добавить ссылку конкурента';
 $MESS['KK_PRICEWATCH_PRODUCT_LIST_TITLE'] = 'Мониторинг цен: #NAME# [#ID#]';
 $MESS['KK_PRICEWATCH_PRODUCT_LIST_CONTEXT'] = 'Товар: #NAME# [#ID#]';
+$MESS['KK_PRICEWATCH_PRODUCT_LIST_CHECK_LINK'] = 'Проверить цену';
+$MESS['KK_PRICEWATCH_PRODUCT_LIST_CHECK_PRODUCT'] = 'Проверить активные цены';

@@ -11,3 +11,4 @@ $MESS['KK_PRICEWATCH_PRODUCT_LAST_CHECK'] = 'Последняя проверка
 $MESS['KK_PRICEWATCH_PRODUCT_LAST_SUCCESS'] = 'Последний успех';
 $MESS['KK_PRICEWATCH_PRODUCT_MANAGE'] = 'Управлять ссылками конкурентов';
 $MESS['KK_PRICEWATCH_PRODUCT_VIEW'] = 'Просмотреть ссылки конкурентов';
+$MESS['KK_PRICEWATCH_PRODUCT_CHECK_ACTIVE'] = 'Проверить активные цены';
