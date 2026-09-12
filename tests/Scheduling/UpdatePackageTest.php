@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 final class UpdatePackageTest extends TestCase
 {
-    public function testVersionUpdaterIsPlacedAtArchiveRoot(): void
+    public function testVersionMetadataIsPlacedAtArchiveRoot(): void
     {
         $root = dirname(__DIR__, 2);
         $directory = sys_get_temp_dir() . '/kk-pricewatch-' . bin2hex(random_bytes(8));
@@ -28,11 +28,37 @@ final class UpdatePackageTest extends TestCase
             self::assertSame(0, $exitCode, implode("\n", $output));
             $archive = new PharData($archivePath);
             self::assertTrue(isset($archive['updater.php']));
-            self::assertFalse(isset($archive['install/updates/0.8.0/updater.php']));
-            self::assertTrue(isset($archive['include.php']));
+            self::assertTrue(isset($archive['description.ru']));
+            self::assertTrue(isset($archive['description.en']));
+            self::assertTrue(isset($archive['install/version.php']));
+
+            foreach (new \RecursiveIteratorIterator($archive) as $file) {
+                self::assertStringNotContainsString(
+                    '/install/updates/0.8.0/',
+                    str_replace('\\', '/', $file->getPathname())
+                );
+            }
         } finally {
             @unlink($archivePath);
             @rmdir($directory);
         }
+    }
+
+    public function testRequestedVersionMustMatchModuleVersion(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $archivePath = sys_get_temp_dir() . '/kk-pricewatch-' . bin2hex(random_bytes(8)) . '.tar.gz';
+
+        exec(
+            escapeshellarg(PHP_BINARY) . ' '
+            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.7.0 '
+            . escapeshellarg($archivePath) . ' 2>&1',
+            $output,
+            $exitCode
+        );
+
+        self::assertSame(1, $exitCode);
+        self::assertStringContainsString('does not match install/version.php', implode("\n", $output));
+        self::assertFileDoesNotExist($archivePath);
     }
 }
