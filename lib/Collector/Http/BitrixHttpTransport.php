@@ -28,7 +28,7 @@ final class BitrixHttpTransport implements HttpTransportInterface
                 'redirectMax' => 0,
             ]);
             $client->setPrivateIp(false);
-            $client->setBodyLength(self::BODY_LIMIT);
+            $client->setBodyLengthMax(self::BODY_LIMIT);
             $client->setHeader('User-Agent', 'kk.pricewatch/0.9.0');
             $client->setHeader('Accept', 'text/html, application/xhtml+xml');
 

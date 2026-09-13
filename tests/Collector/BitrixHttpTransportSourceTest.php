@@ -17,7 +17,8 @@ final class BitrixHttpTransportSourceTest extends TestCase
         self::assertStringContainsString("'redirect' => false", $source);
         self::assertStringContainsString("'redirectMax' => 0", $source);
         self::assertStringContainsString('setPrivateIp(false)', $source);
-        self::assertStringContainsString('setBodyLength(self::BODY_LIMIT)', $source);
+        self::assertStringContainsString('setBodyLengthMax(self::BODY_LIMIT)', $source);
+        self::assertStringNotContainsString('setBodyLength(self::BODY_LIMIT)', $source);
         self::assertStringContainsString('$client->get($url)', $source);
         self::assertStringNotContainsString('disableSslVerification', $source);
         self::assertDoesNotMatchRegularExpression('/curl_|file_get_contents|exec\s*\(|setPrivateIp\(true\)|post\s*\(/i', $source);
