@@ -1,0 +1,2 @@
+<p>Fixes nullable currency validation when changing a monitored competitor or product URL.</p>
+<p>No database migration is required; existing monitoring data is preserved.</p>

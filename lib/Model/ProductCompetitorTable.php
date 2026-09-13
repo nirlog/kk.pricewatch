@@ -51,14 +51,7 @@ final class ProductCompetitorTable extends DataManager
                 ->configureNullable()
                 ->configureSize(3)
                 ->addValidator(new LengthValidator(3, 3))
-                ->addValidator(static function (string $value): bool|string {
-                    try {
-                        Money::assertCurrency($value);
-                        return true;
-                    } catch (\InvalidArgumentException) {
-                        return 'Currency must be an uppercase three-letter code.';
-                    }
-                }),
+                ->addValidator(self::currencyValidator(...)),
             (new StringField('STATUS'))
                 ->configureRequired()
                 ->configureSize(16)
@@ -108,5 +101,22 @@ final class ProductCompetitorTable extends DataManager
     private static function positiveIdValidator(int $value): bool|string
     {
         return $value > 0 ?: 'ID must be greater than zero.';
+    }
+
+    private static function currencyValidator(mixed $value): bool|string
+    {
+        if ($value === null) {
+            return true;
+        }
+        if (!is_string($value)) {
+            return 'Currency must be an uppercase three-letter code.';
+        }
+
+        try {
+            Money::assertCurrency($value);
+            return true;
+        } catch (\InvalidArgumentException) {
+            return 'Currency must be an uppercase three-letter code.';
+        }
     }
 }
