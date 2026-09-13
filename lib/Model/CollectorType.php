@@ -9,9 +9,10 @@ use InvalidArgumentException;
 final class CollectorType
 {
     public const MOCK = 'mock';
+    public const HTTP = 'http';
     public const EXTERNAL = 'external';
 
-    private const KNOWN_TYPES = [self::MOCK, self::EXTERNAL];
+    private const KNOWN_TYPES = [self::MOCK, self::HTTP, self::EXTERNAL];
 
     public static function isValid(string $type): bool
     {

@@ -37,7 +37,7 @@ final class PriceUpdateService implements PriceUpdateServiceInterface
         $competitorIds = array_values(array_unique(array_map(static fn(array $row): int => (int) $row['COMPETITOR_ID'], $links)));
         $competitors = [];
         if ($competitorIds !== []) {
-            $rows = CompetitorTable::getList(['filter' => ['@ID' => $competitorIds], 'select' => ['ID', 'ACTIVE', 'COLLECTOR_TYPE', 'COLLECTOR_HANDLER', 'COLLECTOR_OPTIONS']]);
+            $rows = CompetitorTable::getList(['filter' => ['@ID' => $competitorIds], 'select' => ['ID', 'ACTIVE', 'DOMAIN', 'COLLECTOR_TYPE', 'COLLECTOR_HANDLER', 'COLLECTOR_OPTIONS']]);
             while ($row = $rows->fetch()) { $competitors[(int) $row['ID']] = $row; }
         }
 

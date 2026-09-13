@@ -53,6 +53,14 @@ final class CompetitorAdminSourceTest extends TestCase
         self::assertStringContainsString('CompetitorTable::delete(', $edit);
     }
 
+    public function testHttpCollectorIsAvailableWithoutChangingMutationProtection(): void
+    {
+        $edit = self::source('admin/competitor_edit.php');
+        self::assertStringContainsString('<option value="http"', $edit);
+        self::assertStringContainsString('check_bitrix_sessid()', $edit);
+        self::assertStringContainsString('Access::canWrite()', $edit);
+    }
+
     public function testListWhitelistsSortingAndEscapesValues(): void
     {
         $list = self::source('admin/competitors.php');
