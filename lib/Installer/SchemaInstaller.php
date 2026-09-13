@@ -7,6 +7,7 @@ namespace KK\PriceWatch\Installer;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Connection;
 use KK\PriceWatch\Model\CompetitorTable;
+use KK\PriceWatch\Model\PriceHistoryTable;
 use KK\PriceWatch\Model\ProductCompetitorTable;
 
 final class SchemaInstaller
@@ -32,6 +33,15 @@ final class SchemaInstaller
         );
         $this->ensureIndex($table, 'ix_kk_pw_pc_product', ['PRODUCT_ID']);
         $this->ensureIndex($table, 'ix_kk_pw_pc_competitor', ['COMPETITOR_ID']);
+
+        $historyTable = PriceHistoryTable::getTableName();
+        if (!$connection->isTableExists($historyTable)) {
+            PriceHistoryTable::getEntity()->createDbTable();
+        }
+        $this->ensureIndex($historyTable, 'ix_kk_pw_ph_link_date', ['PRODUCT_COMPETITOR_ID', 'COLLECTED_AT']);
+        $this->ensureIndex($historyTable, 'ix_kk_pw_ph_product_date', ['PRODUCT_ID', 'COLLECTED_AT']);
+        $this->ensureIndex($historyTable, 'ix_kk_pw_ph_competitor_date', ['COMPETITOR_ID', 'COLLECTED_AT']);
+        $this->ensureIndex($historyTable, 'ix_kk_pw_ph_identity_date', ['PRODUCT_COMPETITOR_ID', 'URL_HASH', 'COLLECTED_AT']);
     }
 
     private function ensureIndex(string $table, string $name, array $columns, ?string $type = null): void
