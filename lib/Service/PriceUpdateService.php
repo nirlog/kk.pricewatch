@@ -23,6 +23,7 @@ final class PriceUpdateService implements PriceUpdateServiceInterface
     public function __construct(
         private readonly CollectorFactoryInterface $collectorFactory,
         private readonly RequestIdGeneratorInterface $requestIdGenerator,
+        private readonly ?SuccessPersistenceInterface $successPersistence = null,
     ) {
     }
 
@@ -31,7 +32,7 @@ final class PriceUpdateService implements PriceUpdateServiceInterface
     {
         $ids = $this->normalizeIds($linkIds);
         $links = [];
-        $rows = ProductCompetitorTable::getList(['filter' => ['@ID' => $ids], 'select' => ['ID', 'COMPETITOR_ID', 'URL', 'ACTIVE']]);
+        $rows = ProductCompetitorTable::getList(['filter' => ['@ID' => $ids], 'select' => ['ID', 'PRODUCT_ID', 'COMPETITOR_ID', 'URL', 'URL_HASH', 'ACTIVE']]);
         while ($row = $rows->fetch()) { $links[(int) $row['ID']] = $row; }
 
         $competitorIds = array_values(array_unique(array_map(static fn(array $row): int => (int) $row['COMPETITOR_ID'], $links)));
@@ -80,7 +81,7 @@ final class PriceUpdateService implements PriceUpdateServiceInterface
         }
         $results = [];
         foreach ($response->items as $item) { $results[$item->id] = $item; }
-        return array_map(fn(array $link): PriceUpdateOutcome => $this->persistItem((int) $link['ID'], $results[(string) $link['ID']], $checkedAt), $links);
+        return array_map(fn(array $link): PriceUpdateOutcome => $this->persistItem($link, $results[(string) $link['ID']], $checkedAt), $links);
     }
 
     private function isCorrelated(CollectorRequest $request, CollectorResponse $response): bool
@@ -92,9 +93,27 @@ final class PriceUpdateService implements PriceUpdateServiceInterface
         return $requested === [];
     }
 
-    private function persistItem(int $id, CollectorItemResult $item, DateTime $checkedAt): PriceUpdateOutcome
+    /** @param array<string, mixed> $link */
+    private function persistItem(array $link, CollectorItemResult $item, DateTime $checkedAt): PriceUpdateOutcome
     {
+        $id = (int) $link['ID'];
         if (!$item->success) { return $this->persistError($id, $item->error->code, $item->error->message, $checkedAt); }
+        if ($this->successPersistence !== null) {
+            try {
+                $saved = $this->successPersistence->persist(
+                    $id,
+                    CollectedLinkIdentity::fromRow($link),
+                    $item->price,
+                    $item->currency,
+                    $checkedAt,
+                );
+            } catch (Throwable) {
+                $saved = false;
+            }
+            return $saved
+                ? new PriceUpdateOutcome($id, PriceUpdateOutcome::SUCCESS)
+                : new PriceUpdateOutcome($id, PriceUpdateOutcome::PERSISTENCE_FAILURE, 'PERSISTENCE_ERROR', 'The collection state could not be saved.');
+        }
         return $this->update($id, ['CURRENT_PRICE' => $item->price, 'CURRENCY' => $item->currency, 'STATUS' => CollectionStatus::SUCCESS,
             'ERROR_CODE' => null, 'ERROR_MESSAGE' => null, 'LAST_CHECK_AT' => $checkedAt, 'LAST_SUCCESS_AT' => $checkedAt], PriceUpdateOutcome::SUCCESS);
     }

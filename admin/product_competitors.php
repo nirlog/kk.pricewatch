@@ -67,10 +67,13 @@ while ($item = $data->Fetch()) {
     foreach (['ACTIVE', 'CURRENT_PRICE', 'CURRENCY', 'STATUS', 'LAST_CHECK_AT', 'LAST_SUCCESS_AT', 'UPDATED_AT'] as $field) {
         $row->AddViewField($field, htmlspecialcharsbx((string) $item[$field]));
     }
+    $historyUrl = 'kk_pricewatch_price_history.php?lang=' . LANGUAGE_ID . '&PRODUCT_ID=' . $productId . '&PRODUCT_COMPETITOR_ID=' . $id;
+    $actions = [['TEXT' => Loc::getMessage('KK_PRICEWATCH_PRODUCT_LIST_HISTORY'), 'ACTION' => 'window.location.href=' . CUtil::PhpToJSObject($historyUrl)]];
     if (Access::canWrite()) {
         $checkUrl = 'kk_pricewatch_product_price_check.php?lang=' . LANGUAGE_ID . '&MODE=link&PRODUCT_ID=' . $productId . '&LINK_ID=' . $id;
-        $row->AddActions([['TEXT' => Loc::getMessage('KK_PRICEWATCH_PRODUCT_LIST_CHECK_LINK'), 'ACTION' => 'window.location.href=' . CUtil::PhpToJSObject($checkUrl)]]);
+        $actions[] = ['TEXT' => Loc::getMessage('KK_PRICEWATCH_PRODUCT_LIST_CHECK_LINK'), 'ACTION' => 'window.location.href=' . CUtil::PhpToJSObject($checkUrl)];
     }
+    $row->AddActions($actions);
 }
 $menu = [];
 if (Access::canWrite()) {

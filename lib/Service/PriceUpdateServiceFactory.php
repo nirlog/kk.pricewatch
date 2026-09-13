@@ -8,6 +8,6 @@ final class PriceUpdateServiceFactory
 {
     public static function createDefault(): PriceUpdateService
     {
-        return new PriceUpdateService(new DefaultCollectorFactory(), new RandomRequestIdGenerator());
+        return new PriceUpdateService(new DefaultCollectorFactory(), new RandomRequestIdGenerator(), new OrmSuccessPersistence());
     }
 }
