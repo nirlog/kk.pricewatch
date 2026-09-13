@@ -14,11 +14,11 @@ final class UpdatePackageTest extends TestCase
         $root = dirname(__DIR__, 2);
         $directory = sys_get_temp_dir() . '/kk-pricewatch-' . bin2hex(random_bytes(8));
         self::assertTrue(mkdir($directory));
-        $archivePath = $directory . '/0.10.0.tar.gz';
+        $archivePath = $directory . '/0.11.0.tar.gz';
 
         exec(
             escapeshellarg(PHP_BINARY) . ' '
-            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.10.0 '
+            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.11.0 '
             . escapeshellarg($archivePath),
             $output,
             $exitCode
@@ -35,7 +35,7 @@ final class UpdatePackageTest extends TestCase
 
             foreach (new \RecursiveIteratorIterator($archive) as $file) {
                 self::assertStringNotContainsString(
-                    '/install/updates/0.10.0/',
+                    '/install/updates/0.11.0/',
                     str_replace('\\', '/', $file->getPathname())
                 );
             }
@@ -61,5 +61,13 @@ final class UpdatePackageTest extends TestCase
         self::assertSame(1, $exitCode);
         self::assertStringContainsString('does not match install/version.php', implode("\n", $output));
         self::assertFileDoesNotExist($archivePath);
+    }
+
+    public function testAnalyticsUpdateDoesNotRunSchemaInstallation(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $updater = (string) file_get_contents($root . '/install/updates/0.11.0/updater.php');
+        self::assertStringNotContainsString('SchemaInstaller', $updater);
+        self::assertStringContainsString('AdminInstaller', $updater);
     }
 }
