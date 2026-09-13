@@ -4,6 +4,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\EventManager;
 use KK\PriceWatch\Admin\ProductEditTabHandler;
+use KK\PriceWatch\Installer\AdminInstaller;
 use KK\PriceWatch\Installer\SchemaInstaller;
 use KK\PriceWatch\Installer\ScheduledAgentInstaller;
 
@@ -40,9 +41,7 @@ class kk_pricewatch extends CModule
     public function DoInstall(): void
     {
         (new SchemaInstaller())->install();
-        if (!CopyDirFiles(__DIR__ . '/admin', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin', true, true)) {
-            throw new RuntimeException('Could not install kk.pricewatch admin entry points.');
-        }
+        (new AdminInstaller())->install(__DIR__, $_SERVER['DOCUMENT_ROOT']);
         ModuleManager::registerModule($this->MODULE_ID);
         (new ScheduledAgentInstaller())->install();
         $events = EventManager::getInstance();

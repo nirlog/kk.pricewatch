@@ -31,6 +31,7 @@ final class UpdatePackageTest extends TestCase
             self::assertTrue(isset($archive['description.ru']));
             self::assertTrue(isset($archive['description.en']));
             self::assertTrue(isset($archive['install/version.php']));
+            self::assertTrue(isset($archive['install/admin/kk_pricewatch_price_history.php']));
 
             foreach (new \RecursiveIteratorIterator($archive) as $file) {
                 self::assertStringNotContainsString(

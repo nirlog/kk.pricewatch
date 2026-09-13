@@ -13,8 +13,17 @@ final class PriceHistoryDecisionTest extends TestCase
     {
         self::assertTrue(PriceHistoryDecision::shouldAppend(null, null, '100000.00', 'RUB'));
         self::assertFalse(PriceHistoryDecision::shouldAppend('100000.00', 'RUB', '100000.00', 'RUB'));
+        self::assertFalse(PriceHistoryDecision::shouldAppend('187040', 'RUB', '187040.00', 'RUB'));
+        self::assertFalse(PriceHistoryDecision::shouldAppend('00187040.0', 'RUB', '187040.00', 'RUB'));
         self::assertTrue(PriceHistoryDecision::shouldAppend('100000.00', 'RUB', '95000.00', 'RUB'));
         self::assertTrue(PriceHistoryDecision::shouldAppend('95000.00', 'RUB', '95000.00', 'USD'));
+    }
+
+    public function testCanonicalizationNeverNeedsFloatSemantics(): void
+    {
+        self::assertSame('187040.00', PriceHistoryDecision::canonicalPrice('187040'));
+        self::assertSame('187040.00', PriceHistoryDecision::canonicalPrice('00187040.0'));
+        self::assertSame('0.05', PriceHistoryDecision::canonicalPrice('0.05'));
     }
 
     public function testReturnToAnEarlierPriceRemainsAChange(): void

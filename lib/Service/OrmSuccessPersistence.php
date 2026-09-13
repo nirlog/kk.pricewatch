@@ -15,22 +15,28 @@ use Throwable;
 /** Atomic, per-link success persistence. Collection has completed before this is called. */
 final class OrmSuccessPersistence implements SuccessPersistenceInterface
 {
-    public function persist(int $linkId, string $price, string $currency, DateTime $collectedAt): bool
-    {
+    public function persist(
+        int $linkId,
+        CollectedLinkIdentity $collectedIdentity,
+        string $price,
+        string $currency,
+        DateTime $collectedAt,
+    ): bool {
         $connection = Application::getConnection();
         $connection->startTransaction();
 
         try {
-            // Bitrix Connection exposes queryExecute(); the integer cast and fixed ORM table name
-            // keep this narrowly-scoped locking statement free of user-controlled SQL fragments.
-            $connection->queryExecute(
-                'SELECT ID FROM ' . ProductCompetitorTable::getTableName() . ' WHERE ID = ' . (int) $linkId . ' FOR UPDATE'
-            );
-            $link = ProductCompetitorTable::getByPrimary($linkId, [
-                'select' => ['ID', 'PRODUCT_ID', 'COMPETITOR_ID', 'URL', 'URL_HASH'],
-            ])->fetch();
+            // query() is Bitrix's SELECT API. Only a fixed table name and an integer
+            // identifier are interpolated into this narrowly scoped locking query.
+            $link = $connection->query(
+                'SELECT ID, PRODUCT_ID, COMPETITOR_ID, URL, URL_HASH FROM '
+                . ProductCompetitorTable::getTableName() . ' WHERE ID = ' . (int) $linkId . ' FOR UPDATE'
+            )->fetch();
             if ($link === false) {
                 throw new RuntimeException('The monitored link disappeared during persistence.');
+            }
+            if (!$collectedIdentity->matchesRow($link)) {
+                throw new RuntimeException('The monitored link identity changed during collection.');
             }
 
             $identity = [
@@ -40,12 +46,16 @@ final class OrmSuccessPersistence implements SuccessPersistenceInterface
                 '=URL' => (string) $link['URL'],
                 '=URL_HASH' => (string) $link['URL_HASH'],
             ];
-            $latest = PriceHistoryTable::getList([
-                'select' => ['PRICE', 'CURRENCY'],
+            $latestIdentity = PriceHistoryTable::getList([
+                'select' => ['ID'],
                 'filter' => $identity,
                 'order' => ['COLLECTED_AT' => 'DESC', 'ID' => 'DESC'],
                 'limit' => 1,
             ])->fetch();
+            $latest = $latestIdentity === false ? false : $connection->query(
+                'SELECT PRICE, CURRENCY FROM ' . PriceHistoryTable::getTableName()
+                . ' WHERE ID = ' . (int) $latestIdentity['ID']
+            )->fetch();
 
             if (PriceHistoryDecision::shouldAppend(
                 $latest === false ? null : (string) $latest['PRICE'],

@@ -32,7 +32,7 @@ final class PriceUpdateService implements PriceUpdateServiceInterface
     {
         $ids = $this->normalizeIds($linkIds);
         $links = [];
-        $rows = ProductCompetitorTable::getList(['filter' => ['@ID' => $ids], 'select' => ['ID', 'COMPETITOR_ID', 'URL', 'ACTIVE']]);
+        $rows = ProductCompetitorTable::getList(['filter' => ['@ID' => $ids], 'select' => ['ID', 'PRODUCT_ID', 'COMPETITOR_ID', 'URL', 'URL_HASH', 'ACTIVE']]);
         while ($row = $rows->fetch()) { $links[(int) $row['ID']] = $row; }
 
         $competitorIds = array_values(array_unique(array_map(static fn(array $row): int => (int) $row['COMPETITOR_ID'], $links)));
@@ -81,7 +81,7 @@ final class PriceUpdateService implements PriceUpdateServiceInterface
         }
         $results = [];
         foreach ($response->items as $item) { $results[$item->id] = $item; }
-        return array_map(fn(array $link): PriceUpdateOutcome => $this->persistItem((int) $link['ID'], $results[(string) $link['ID']], $checkedAt), $links);
+        return array_map(fn(array $link): PriceUpdateOutcome => $this->persistItem($link, $results[(string) $link['ID']], $checkedAt), $links);
     }
 
     private function isCorrelated(CollectorRequest $request, CollectorResponse $response): bool
@@ -93,12 +93,20 @@ final class PriceUpdateService implements PriceUpdateServiceInterface
         return $requested === [];
     }
 
-    private function persistItem(int $id, CollectorItemResult $item, DateTime $checkedAt): PriceUpdateOutcome
+    /** @param array<string, mixed> $link */
+    private function persistItem(array $link, CollectorItemResult $item, DateTime $checkedAt): PriceUpdateOutcome
     {
+        $id = (int) $link['ID'];
         if (!$item->success) { return $this->persistError($id, $item->error->code, $item->error->message, $checkedAt); }
         if ($this->successPersistence !== null) {
             try {
-                $saved = $this->successPersistence->persist($id, $item->price, $item->currency, $checkedAt);
+                $saved = $this->successPersistence->persist(
+                    $id,
+                    CollectedLinkIdentity::fromRow($link),
+                    $item->price,
+                    $item->currency,
+                    $checkedAt,
+                );
             } catch (Throwable) {
                 $saved = false;
             }

@@ -8,5 +8,11 @@ use Bitrix\Main\Type\DateTime;
 
 interface SuccessPersistenceInterface
 {
-    public function persist(int $linkId, string $price, string $currency, DateTime $collectedAt): bool;
+    public function persist(
+        int $linkId,
+        CollectedLinkIdentity $collectedIdentity,
+        string $price,
+        string $currency,
+        DateTime $collectedAt,
+    ): bool;
 }

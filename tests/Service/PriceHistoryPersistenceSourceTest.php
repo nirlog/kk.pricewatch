@@ -13,6 +13,9 @@ final class PriceHistoryPersistenceSourceTest extends TestCase
         $source = (string) file_get_contents(dirname(__DIR__, 2) . '/lib/Service/OrmSuccessPersistence.php');
         self::assertStringContainsString('startTransaction()', $source);
         self::assertStringContainsString("WHERE ID = ' . (int) \$linkId . ' FOR UPDATE", $source);
+        self::assertStringContainsString('$connection->query(', $source);
+        self::assertStringNotContainsString('queryExecute(', $source);
+        self::assertStringContainsString(')->fetch()', $source);
         self::assertStringContainsString('commitTransaction()', $source);
         self::assertStringContainsString('rollbackTransaction()', $source);
         self::assertLessThan(strpos($source, 'ProductCompetitorTable::update'), strpos($source, 'PriceHistoryTable::add'));
@@ -29,6 +32,9 @@ final class PriceHistoryPersistenceSourceTest extends TestCase
         }
         self::assertStringContainsString("'order' => ['COLLECTED_AT' => 'DESC', 'ID' => 'DESC']", $source);
         self::assertStringContainsString('PriceHistoryDecision::shouldAppend(', $source);
+        self::assertStringContainsString('$collectedIdentity->matchesRow($link)', $source);
+        self::assertMatchesRegularExpression("/select'\s*=>\s*\['ID'\]/", $source);
+        self::assertStringContainsString('SELECT PRICE, CURRENCY FROM', $source);
         self::assertSame(1, substr_count($source, 'PriceHistoryTable::add('));
         self::assertStringNotContainsString('PriceHistoryTable::update', $source);
         self::assertStringNotContainsString('PriceHistoryTable::delete', $source);

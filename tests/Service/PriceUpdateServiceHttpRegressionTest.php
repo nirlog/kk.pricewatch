@@ -66,8 +66,10 @@ namespace KK\PriceWatch\Tests\Service {
     use KK\PriceWatch\Model\CollectionStatus;
     use KK\PriceWatch\Model\CollectorType;
     use KK\PriceWatch\Service\CollectorFactoryInterface;
+    use KK\PriceWatch\Service\CollectedLinkIdentity;
     use KK\PriceWatch\Service\PriceUpdateService;
     use KK\PriceWatch\Service\RequestIdGeneratorInterface;
+    use KK\PriceWatch\Service\SuccessPersistenceInterface;
     use PHPUnit\Framework\TestCase;
 
     final class PriceUpdateServiceHttpRegressionTest extends TestCase
@@ -76,8 +78,10 @@ namespace KK\PriceWatch\Tests\Service {
         {
             DataManager::$links = [7 => [
                 'ID' => 7,
+                'PRODUCT_ID' => 11,
                 'COMPETITOR_ID' => 3,
                 'URL' => 'https://example.test/product?region=msk',
+                'URL_HASH' => hash('sha256', 'https://example.test/product?region=msk'),
                 'ACTIVE' => 'Y',
                 'CURRENT_PRICE' => '100.00',
                 'CURRENCY' => 'RUB',
@@ -128,15 +132,73 @@ namespace KK\PriceWatch\Tests\Service {
             self::assertInstanceOf(\Bitrix\Main\Type\DateTime::class, DataManager::$links[7]['LAST_CHECK_AT']);
         }
 
-        private function service(HttpFetchResult $fetchResult): PriceUpdateService
+        public function testIdentityChangedDuringCollectionIsRejectedAsPersistenceFailure(): void
         {
-            $transport = new class($fetchResult) implements HttpTransportInterface {
-                public function __construct(private readonly HttpFetchResult $result)
+            $persistence = new class implements SuccessPersistenceInterface {
+                public function persist(
+                    int $linkId,
+                    CollectedLinkIdentity $collectedIdentity,
+                    string $price,
+                    string $currency,
+                    \Bitrix\Main\Type\DateTime $collectedAt,
+                ): bool {
+                    return $collectedIdentity->matchesRow(DataManager::$links[$linkId]);
+                }
+            };
+            $duringFetch = static function (): void {
+                DataManager::$links[7]['URL'] = 'https://example.test/replacement';
+                DataManager::$links[7]['URL_HASH'] = str_repeat('b', 64);
+            };
+
+            $result = $this->service(
+                HttpFetchResult::success(200, 'text/html', '<b>187 040 ₽</b>', DataManager::$links[7]['URL']),
+                $persistence,
+                $duringFetch,
+            )->updateLinks([7]);
+
+            self::assertSame(1, $result->persistenceFailureCount());
+            self::assertSame('100.00', DataManager::$links[7]['CURRENT_PRICE']);
+        }
+
+        public function testSuccessPersistenceFailureMapsToSafeOutcome(): void
+        {
+            $persistence = new class implements SuccessPersistenceInterface {
+                public function persist(
+                    int $linkId,
+                    CollectedLinkIdentity $collectedIdentity,
+                    string $price,
+                    string $currency,
+                    \Bitrix\Main\Type\DateTime $collectedAt,
+                ): bool {
+                    return false;
+                }
+            };
+            $result = $this->service(
+                HttpFetchResult::success(200, 'text/html', '<b>187 040 ₽</b>', DataManager::$links[7]['URL']),
+                $persistence,
+            )->updateLinks([7]);
+
+            self::assertSame(1, $result->persistenceFailureCount());
+            self::assertSame('PERSISTENCE_ERROR', $result->outcomes[0]->code);
+            self::assertSame('100.00', DataManager::$links[7]['CURRENT_PRICE']);
+        }
+
+        private function service(
+            HttpFetchResult $fetchResult,
+            ?SuccessPersistenceInterface $persistence = null,
+            ?\Closure $duringFetch = null,
+        ): PriceUpdateService
+        {
+            $transport = new class($fetchResult, $duringFetch) implements HttpTransportInterface {
+                public function __construct(private readonly HttpFetchResult $result, private readonly ?\Closure $duringFetch)
                 {
                 }
 
                 public function fetch(string $url): HttpFetchResult
                 {
+                    if ($this->duringFetch !== null) {
+                        ($this->duringFetch)();
+                    }
                     return $this->result;
                 }
             };
@@ -162,7 +224,7 @@ namespace KK\PriceWatch\Tests\Service {
                     return 'http-regression-request';
                 }
             };
-            return new PriceUpdateService($factory, $requestIds);
+            return new PriceUpdateService($factory, $requestIds, $persistence);
         }
     }
 }
