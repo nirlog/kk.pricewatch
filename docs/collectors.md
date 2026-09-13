@@ -62,6 +62,32 @@ Scenarios are evaluated in declaration order and support `exact` and `contains`
 URL matching. They can produce either a `success` result or an `error` result
 with an application-stable code and a human-readable message.
 
+## Using the HTTP HTML collector
+
+Select collector type `http`, set `DOMAIN` to the exact allowed hostname (without
+a scheme or path), leave `COLLECTOR_HANDLER` empty, and configure XPath extraction:
+
+```json
+{
+  "price_selector": {
+    "type": "xpath",
+    "value": "//REPLACE_WITH_VERIFIED_PRICE_NODE"
+  },
+  "currency": "RUB"
+}
+```
+
+The collector accepts only absolute HTTP(S) item URLs on that exact, non-IP
+hostname. Redirects and private-network access are disabled. It accepts
+`text/html` and `application/xhtml+xml` responses and extracts node text without
+executing scripts. Update the XPath in competitor configuration when page markup
+changes; no competitor-specific XPath belongs in PHP.
+
+Expected failures remain item-local: `URL_NOT_ALLOWED`, `HTTP_REQUEST_FAILED`,
+`HTTP_STATUS`, `INVALID_CONTENT_TYPE`, `HTML_PARSE_ERROR`, `PRICE_NOT_FOUND`,
+`PRICE_AMBIGUOUS`, and `PRICE_INVALID`. Transport details and response bodies are
+not included in these errors.
+
 ## Adding another implementation
 
 1. Implement `CollectorInterface`; do not change callers or special-case a

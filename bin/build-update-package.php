@@ -29,7 +29,10 @@ if ($version !== $installedVersion) {
 }
 
 $updateSource = $root . '/install/updates/' . $version;
-$updateFiles = ['updater.php', 'description.ru', 'description.en'];
+$updateFiles = ['description.ru', 'description.en'];
+if (is_file($updateSource . '/updater.php')) {
+    array_unshift($updateFiles, 'updater.php');
+}
 foreach ($updateFiles as $file) {
     if (!is_file($updateSource . '/' . $file)) {
         fwrite(STDERR, "Missing required update-package source: {$updateSource}/{$file}\n");

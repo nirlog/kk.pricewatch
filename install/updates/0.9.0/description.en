@@ -1,0 +1,2 @@
+<p>Adds the generic, domain-restricted HTTP HTML price collector with configurable XPath extraction.</p>
+<p>No database migration is required; existing monitoring data is preserved.</p>

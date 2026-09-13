@@ -20,7 +20,7 @@ final class CollectorTypeTest extends TestCase
 
     public static function validTypes(): array
     {
-        return [[CollectorType::MOCK], [CollectorType::EXTERNAL]];
+        return [[CollectorType::MOCK], [CollectorType::HTTP], [CollectorType::EXTERNAL]];
     }
 
     #[DataProvider('invalidTypes')]
