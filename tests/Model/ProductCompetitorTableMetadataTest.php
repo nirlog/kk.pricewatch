@@ -63,10 +63,21 @@ final class ProductCompetitorTableMetadataTest extends TestCase
 
         self::assertStringContainsString('configureSize(3)', $currencyDeclaration);
         self::assertStringContainsString('new LengthValidator(3, 3)', $currencyDeclaration);
-        self::assertStringContainsString('Money::assertCurrency($value)', $currencyDeclaration);
+        self::assertStringContainsString('self::currencyValidator(...)', $currencyDeclaration);
         self::assertStringContainsString('configureSize(16)', $statusDeclaration);
         self::assertStringContainsString('new LengthValidator(null, 16)', $statusDeclaration);
         self::assertStringContainsString('CollectionStatus::isValid($value)', $statusDeclaration);
+    }
+
+    public function testCurrencySemanticValidatorAcceptsNullAndValidatesNonNullValues(): void
+    {
+        $method = new \ReflectionMethod(\KK\PriceWatch\Model\ProductCompetitorTable::class, 'currencyValidator');
+
+        self::assertTrue($method->invoke(null, null));
+        self::assertTrue($method->invoke(null, 'RUB'));
+        self::assertIsString($method->invoke(null, 'rub'));
+        self::assertIsString($method->invoke(null, 'EURO'));
+        self::assertIsString($method->invoke(null, 123));
     }
 
     public function testInstallerUsesConnectionApiForUniqueIndex(): void

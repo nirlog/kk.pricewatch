@@ -23,7 +23,7 @@ final class ProductCompetitorAdminSourceTest extends TestCase
         self::assertStringNotContainsString('if (!DeleteDirFiles', $installer);
         self::assertFileExists(dirname(__DIR__, 2) . '/install/admin/kk_pricewatch_product_competitors.php');
         self::assertFileExists(dirname(__DIR__, 2) . '/install/admin/kk_pricewatch_product_competitor_edit.php');
-        self::assertStringContainsString("'VERSION' => '0.9.0'", self::source('install/version.php'));
+        self::assertStringContainsString("'VERSION' => '0.9.1'", self::source('install/version.php'));
     }
 
     public function testTabIsReadOnlyAndRestricted(): void
@@ -68,8 +68,14 @@ final class ProductCompetitorAdminSourceTest extends TestCase
         self::assertStringContainsString('check_bitrix_sessid()', $page);
         self::assertStringContainsString("getPost('URL')", $page);
         self::assertStringNotContainsString("getPost('URL_HASH')", $page);
-        self::assertStringContainsString("'CURRENT_PRICE' => null", $service);
-        self::assertStringContainsString("'LAST_SUCCESS_AT' => null", $service);
+        foreach (['CURRENT_PRICE', 'CURRENCY', 'ERROR_CODE', 'ERROR_MESSAGE', 'LAST_CHECK_AT', 'LAST_SUCCESS_AT'] as $field) {
+            self::assertStringContainsString("'{$field}' => null", $service);
+        }
+        self::assertStringContainsString("'STATUS' => CollectionStatus::NEW", $service);
+        self::assertMatchesRegularExpression(
+            '/COMPETITOR_ID.*?!==.*?\$competitorId.*?\|\|.*?URL.*?!==.*?\$exactUrl/s',
+            $service
+        );
         self::assertStringContainsString('ProductUrl::hash($exactUrl)', $service);
         self::assertStringContainsString('ProductContext::findCatalogProduct($productId)', $service);
         self::assertStringContainsString('CompetitorTable::getByPrimary', $service);
