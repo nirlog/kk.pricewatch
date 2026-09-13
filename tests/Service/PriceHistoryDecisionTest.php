@@ -21,9 +21,32 @@ final class PriceHistoryDecisionTest extends TestCase
 
     public function testCanonicalizationNeverNeedsFloatSemantics(): void
     {
-        self::assertSame('187040.00', PriceHistoryDecision::canonicalPrice('187040'));
-        self::assertSame('187040.00', PriceHistoryDecision::canonicalPrice('00187040.0'));
+        self::assertSame('1.00', PriceHistoryDecision::canonicalPrice('1'));
+        self::assertSame('1.20', PriceHistoryDecision::canonicalPrice('1.2'));
+        self::assertSame('1.20', PriceHistoryDecision::canonicalPrice('001.2000'));
+        self::assertSame('1.23', PriceHistoryDecision::canonicalPrice('1.234'));
+        self::assertSame('1.24', PriceHistoryDecision::canonicalPrice('1.235'));
+        self::assertSame('10.00', PriceHistoryDecision::canonicalPrice('9.999'));
         self::assertSame('0.05', PriceHistoryDecision::canonicalPrice('0.05'));
+    }
+
+    public function testRepeatedValuesEquivalentAfterPersistenceRoundingDoNotAppend(): void
+    {
+        self::assertFalse(PriceHistoryDecision::shouldAppend('1.23', 'RUB', '1.234', 'RUB'));
+        self::assertFalse(PriceHistoryDecision::shouldAppend('1.24', 'RUB', '1.235', 'RUB'));
+        self::assertFalse(PriceHistoryDecision::shouldAppend('1.20', 'RUB', '001.2000', 'RUB'));
+    }
+
+    public function testLastAppendedStateControlsDecisionRegardlessOfCollectionTime(): void
+    {
+        $appended = [
+            ['id' => 10, 'collected_at' => '10:00:02', 'price' => '90.00'],
+            ['id' => 11, 'collected_at' => '10:00:01', 'price' => '100.00'],
+        ];
+        usort($appended, static fn(array $left, array $right): int => $right['id'] <=> $left['id']);
+
+        self::assertFalse(PriceHistoryDecision::shouldAppend($appended[0]['price'], 'RUB', '100.000', 'RUB'));
+        self::assertTrue(PriceHistoryDecision::shouldAppend($appended[0]['price'], 'RUB', '90.00', 'RUB'));
     }
 
     public function testReturnToAnEarlierPriceRemainsAChange(): void

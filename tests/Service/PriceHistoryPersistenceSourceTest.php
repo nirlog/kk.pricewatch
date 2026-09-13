@@ -30,7 +30,8 @@ final class PriceHistoryPersistenceSourceTest extends TestCase
         foreach (['=PRODUCT_COMPETITOR_ID', '=PRODUCT_ID', '=COMPETITOR_ID', '=URL', '=URL_HASH'] as $field) {
             self::assertStringContainsString("'$field'", $source);
         }
-        self::assertStringContainsString("'order' => ['COLLECTED_AT' => 'DESC', 'ID' => 'DESC']", $source);
+        self::assertStringContainsString("'order' => ['ID' => 'DESC']", $source);
+        self::assertStringNotContainsString("'order' => ['COLLECTED_AT' => 'DESC'", $source);
         self::assertStringContainsString('PriceHistoryDecision::shouldAppend(', $source);
         self::assertStringContainsString('$collectedIdentity->matchesRow($link)', $source);
         self::assertMatchesRegularExpression("/select'\s*=>\s*\['ID'\]/", $source);

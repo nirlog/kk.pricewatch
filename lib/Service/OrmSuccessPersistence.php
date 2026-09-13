@@ -49,7 +49,9 @@ final class OrmSuccessPersistence implements SuccessPersistenceInterface
             $latestIdentity = PriceHistoryTable::getList([
                 'select' => ['ID'],
                 'filter' => $identity,
-                'order' => ['COLLECTED_AT' => 'DESC', 'ID' => 'DESC'],
+                // ID is append/commit order under the per-link row lock. A writer can
+                // wait with an older COLLECTED_AT, so timestamps are not effective order.
+                'order' => ['ID' => 'DESC'],
                 'limit' => 1,
             ])->fetch();
             $latest = $latestIdentity === false ? false : $connection->query(
