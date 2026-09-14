@@ -5,6 +5,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\EventManager;
 use KK\PriceWatch\Admin\ProductEditTabHandler;
 use KK\PriceWatch\Installer\AdminInstaller;
+use KK\PriceWatch\Installer\ComponentInstaller;
 use KK\PriceWatch\Installer\SchemaInstaller;
 use KK\PriceWatch\Installer\ScheduledAgentInstaller;
 
@@ -42,6 +43,7 @@ class kk_pricewatch extends CModule
     {
         (new SchemaInstaller())->install();
         (new AdminInstaller())->install(__DIR__, $_SERVER['DOCUMENT_ROOT']);
+        (new ComponentInstaller())->install(__DIR__, $_SERVER['DOCUMENT_ROOT']);
         ModuleManager::registerModule($this->MODULE_ID);
         (new ScheduledAgentInstaller())->install();
         $events = EventManager::getInstance();
@@ -52,6 +54,7 @@ class kk_pricewatch extends CModule
     public function DoUninstall(): void
     {
         (new ScheduledAgentInstaller())->uninstall();
+        (new ComponentInstaller())->uninstall($_SERVER['DOCUMENT_ROOT']);
         EventManager::getInstance()->unRegisterEventHandler(
             'main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin'
         );

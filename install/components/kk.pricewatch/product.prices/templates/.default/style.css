@@ -1,0 +1,7 @@
+.kk-pricewatch-product-prices { border: 1px solid #d6dce3; padding: 16px; }
+.kk-pricewatch-product-prices__staff { color: #68717c; font-size: 12px; text-transform: uppercase; }
+.kk-pricewatch-product-prices__heading { margin: 4px 0 12px; }
+.kk-pricewatch-product-prices__list { list-style: none; margin: 0; padding: 0; }
+.kk-pricewatch-product-prices__item { display: grid; gap: 4px 16px; grid-template-columns: minmax(140px, 1fr) auto; padding: 10px 0; }
+.kk-pricewatch-product-prices__item + .kk-pricewatch-product-prices__item { border-top: 1px solid #e7eaee; }
+.kk-pricewatch-product-prices__state { color: #a65d00; }
