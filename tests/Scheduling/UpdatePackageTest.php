@@ -14,11 +14,11 @@ final class UpdatePackageTest extends TestCase
         $root = dirname(__DIR__, 2);
         $directory = sys_get_temp_dir() . '/kk-pricewatch-' . bin2hex(random_bytes(8));
         self::assertTrue(mkdir($directory));
-        $archivePath = $directory . '/0.12.0.tar.gz';
+        $archivePath = $directory . '/0.12.1.tar.gz';
 
         exec(
             escapeshellarg(PHP_BINARY) . ' '
-            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.12.0 '
+            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.12.1 '
             . escapeshellarg($archivePath),
             $output,
             $exitCode
@@ -36,7 +36,7 @@ final class UpdatePackageTest extends TestCase
 
             foreach (new \RecursiveIteratorIterator($archive) as $file) {
                 self::assertStringNotContainsString(
-                    '/install/updates/0.12.0/',
+                    '/install/updates/0.12.1/',
                     str_replace('\\', '/', $file->getPathname())
                 );
             }
@@ -67,7 +67,7 @@ final class UpdatePackageTest extends TestCase
     public function testProductComponentUpdateDoesNotRunSchemaInstallation(): void
     {
         $root = dirname(__DIR__, 2);
-        $updater = (string) file_get_contents($root . '/install/updates/0.12.0/updater.php');
+        $updater = (string) file_get_contents($root . '/install/updates/0.12.1/updater.php');
         self::assertStringNotContainsString('SchemaInstaller', $updater);
         self::assertStringContainsString('ComponentInstaller', $updater);
     }

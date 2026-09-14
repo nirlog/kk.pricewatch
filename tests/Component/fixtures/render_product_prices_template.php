@@ -23,13 +23,30 @@ namespace Bitrix\Main\Localization {
 namespace {
     use KK\PriceWatch\Model\ProductUrl;
 
+    final class TestCompositeFrame
+    {
+        public function begin(string $stub): self { return $this; }
+        public function end(): void {}
+    }
+
+    final class TestComponentTemplate
+    {
+        public function createFrame(): TestCompositeFrame { return new TestCompositeFrame(); }
+
+        public function render(array $arResult): void
+        {
+            include dirname(__DIR__, 3) . '/install/components/kk.pricewatch/product.prices/templates/.default/template.php';
+        }
+    }
+
     define('B_PROLOG_INCLUDED', true);
     require dirname(__DIR__, 3) . '/lib/Model/ProductUrl.php';
     $url = (string) ($argv[1] ?? '');
-    $arResult = ['ROWS' => [[
+    $accessAllowed = ($argv[2] ?? 'allowed') === 'allowed';
+    $arResult = ['ACCESS_ALLOWED' => $accessAllowed, 'ROWS' => [[
         'competitor_name' => 'Test', 'current_price' => null, 'currency' => null,
         'status' => 'new', 'is_stale' => false, 'last_success_at' => null,
         'exact_url' => $url, 'is_url_safe' => ProductUrl::isAcceptedHttpUrl($url),
     ]]];
-    include dirname(__DIR__, 3) . '/install/components/kk.pricewatch/product.prices/templates/.default/template.php';
+    (new TestComponentTemplate())->render($arResult);
 }
