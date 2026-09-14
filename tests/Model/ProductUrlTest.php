@@ -44,4 +44,20 @@ final class ProductUrlTest extends TestCase
     {
         return [[''], ['   '], ["\t\n"]];
     }
+
+    #[DataProvider('httpUrlPolicyCases')]
+    public function testHttpUrlPolicyDoesNotRewriteExactUrl(string $url, bool $accepted): void
+    {
+        self::assertSame($accepted, ProductUrl::isAcceptedHttpUrl($url));
+    }
+
+    public static function httpUrlPolicyCases(): array
+    {
+        return [
+            ['https://Example.test/item?b=2&a=%2F#choice', true],
+            ['http://example.test:8080/path', true],
+            ['javascript:alert(1)', false],
+            ['data:text/html,test', false],
+        ];
+    }
 }
