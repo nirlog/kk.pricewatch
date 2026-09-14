@@ -43,7 +43,9 @@ $formatTime = static function (mixed $value): string {
                 <?php $updated = $formatTime($row['last_success_at']); if ($updated !== ''): ?>
                     <span><?= HtmlFilter::encode((string) Loc::getMessage('KK_PRICEWATCH_UPDATED')) ?> <?= HtmlFilter::encode($updated) ?></span>
                 <?php endif; ?>
-                <a href="<?= HtmlFilter::encode($row['exact_url']) ?>" target="_blank" rel="noopener noreferrer"><?= HtmlFilter::encode((string) Loc::getMessage('KK_PRICEWATCH_OPEN')) ?></a>
+                <?php if ($row['is_url_safe']): ?>
+                    <a href="<?= HtmlFilter::encode($row['exact_url']) ?>" target="_blank" rel="noopener noreferrer"><?= HtmlFilter::encode((string) Loc::getMessage('KK_PRICEWATCH_OPEN')) ?></a>
+                <?php endif; ?>
             </li>
         <?php endforeach; ?>
     </ul>

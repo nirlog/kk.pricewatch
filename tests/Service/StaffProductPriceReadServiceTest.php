@@ -32,6 +32,7 @@ final class StaffProductPriceReadServiceTest extends TestCase
         self::assertSame([777], $repository->productIds);
         self::assertSame('1234567890123456.78', $rows[0]['current_price']);
         self::assertFalse($rows[0]['is_stale']);
+        self::assertTrue($rows[0]['is_url_safe']);
         self::assertTrue($rows[1]['is_stale']);
         self::assertSame('error', $rows[1]['status']);
         self::assertNull($rows[2]['current_price']);

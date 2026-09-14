@@ -25,7 +25,12 @@ final class KkPriceWatchProductPricesComponent extends CBitrixComponent
         $this->setFrameMode(true);
         $frame = $this->createFrame()->begin('');
 
-        if (!Loader::includeModule(Access::MODULE_ID) || !Access::canRead()) {
+        if (!Loader::includeModule('kk.pricewatch')) {
+            $frame->end();
+            return;
+        }
+
+        if (!Access::canRead()) {
             $frame->end();
             return;
         }

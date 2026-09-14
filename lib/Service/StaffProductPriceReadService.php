@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace KK\PriceWatch\Service;
 
 use DateTimeInterface;
+use KK\PriceWatch\Model\ProductUrl;
 
 final class StaffProductPriceReadService
 {
@@ -40,6 +41,7 @@ final class StaffProductPriceReadService
                 'competitor_id' => (int) $row['COMPETITOR_ID'],
                 'competitor_name' => (string) $row['COMPETITOR_NAME'],
                 'exact_url' => (string) $row['URL'],
+                'is_url_safe' => ProductUrl::isAcceptedHttpUrl((string) $row['URL']),
                 'current_price' => $hasPrice ? (string) $row['CURRENT_PRICE'] : null,
                 'currency' => $hasPrice ? (string) $row['CURRENCY'] : null,
                 'status' => (string) $row['STATUS'],

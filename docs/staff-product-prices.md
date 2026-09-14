@@ -14,3 +14,5 @@ $APPLICATION->IncludeComponent('kk.pricewatch:product.prices', '', [
 Only users whose `kk.pricewatch` module right is `R` or `W` receive data. The permission check precedes the current-state ORM read. The component uses no result cache. It always creates a composite dynamic area with an empty, data-free stub—even for a denied request—so every dynamic render repeats authorization and neither visit order can leak or suppress staff output. It performs no collection and no writes.
 
 `MAX_AGE_SECONDS` defaults to 86400. A non-negative value is used; `0` disables age-based stale marking. An operational error remains marked as an update failure even when a previous successful price is preserved.
+
+The exact stored URL is used unchanged for valid absolute `http` and `https` destinations. A legacy or otherwise invalid persisted URL (including `javascript:` and `data:` schemes) is not rendered as a clickable link.
