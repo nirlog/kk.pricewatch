@@ -8,6 +8,8 @@ use Bitrix\Main\Text\HtmlFilter;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 Loc::loadMessages(__FILE__);
 
+$frame = $this->createFrame()->begin('');
+
 $formatPrice = static function (string $price, string $currency): string {
     [$integer, $fraction] = array_pad(explode('.', $price, 2), 2, '');
     $integer = preg_replace('/(?<=\d)(?=(\d{3})+(?!\d))/', ' ', $integer) ?? $integer;
@@ -20,7 +22,7 @@ $formatTime = static function (mixed $value): string {
     }
     return '';
 };
-?>
+?><?php if (($arResult['ACCESS_ALLOWED'] ?? false) === true && ($arResult['ROWS'] ?? []) !== []): ?>
 <section class="kk-pricewatch-product-prices" aria-label="<?= HtmlFilter::encode((string) Loc::getMessage('KK_PRICEWATCH_HEADING')) ?>">
     <div class="kk-pricewatch-product-prices__staff"><?= HtmlFilter::encode((string) Loc::getMessage('KK_PRICEWATCH_STAFF_ONLY')) ?></div>
     <h3 class="kk-pricewatch-product-prices__heading"><?= HtmlFilter::encode((string) Loc::getMessage('KK_PRICEWATCH_HEADING')) ?></h3>
@@ -50,3 +52,4 @@ $formatTime = static function (mixed $value): string {
         <?php endforeach; ?>
     </ul>
 </section>
+<?php endif; $frame->end(); ?>

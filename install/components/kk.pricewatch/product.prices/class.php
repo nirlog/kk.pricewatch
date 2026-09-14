@@ -19,33 +19,22 @@ final class KkPriceWatchProductPricesComponent extends CBitrixComponent
             return;
         }
 
-        // Always create the composite dynamic area, including for denied requests.
-        // Its empty stub contains no confidential data; every dynamic render repeats
-        // authorization below. No component result cache is used.
         $this->setFrameMode(true);
-        $frame = $this->createFrame()->begin('');
+        $this->arResult = [
+            'ACCESS_ALLOWED' => false,
+            'ROWS' => [],
+        ];
 
-        if (!Loader::includeModule('kk.pricewatch')) {
-            $frame->end();
-            return;
+        if (Loader::includeModule('kk.pricewatch') && Access::canRead()) {
+            // Authorization above must remain before construction/execution of the ORM read service.
+            $maxAge = filter_var($this->arParams['MAX_AGE_SECONDS'] ?? 86400, FILTER_VALIDATE_INT);
+            $maxAge = $maxAge === false ? 86400 : max(0, $maxAge);
+            $this->arResult['ACCESS_ALLOWED'] = true;
+            $this->arResult['ROWS'] = (new StaffProductPriceReadService())->read($productId, $maxAge);
         }
 
-        if (!Access::canRead()) {
-            $frame->end();
-            return;
-        }
-
-        // Authorization above must remain before construction/execution of the ORM read service.
-        $maxAge = filter_var($this->arParams['MAX_AGE_SECONDS'] ?? 86400, FILTER_VALIDATE_INT);
-        $maxAge = $maxAge === false ? 86400 : max(0, $maxAge);
-        $rows = (new StaffProductPriceReadService())->read($productId, $maxAge);
-        if ($rows === []) {
-            $frame->end();
-            return;
-        }
-
-        $this->arResult = ['ROWS' => $rows];
+        // The template owns the composite frame and must run for every valid product ID,
+        // including module-load failures, denied requests, and empty authorized results.
         $this->includeComponentTemplate();
-        $frame->end();
     }
 }

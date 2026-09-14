@@ -19,7 +19,7 @@ final class ProductPricesComponentSourceTest extends TestCase
         $this->template = (string) file_get_contents($root . '/templates/.default/template.php');
     }
 
-    public function testPermissionPrecedesReadAndThereIsNoSharedOrCompositeCache(): void
+    public function testPermissionPrecedesReadAndCompositeFrameBelongsToTemplate(): void
     {
         $moduleLoad = strpos($this->component, "Loader::includeModule('kk.pricewatch')");
         $permission = strpos($this->component, 'Access::canRead()');
@@ -29,12 +29,34 @@ final class ProductPricesComponentSourceTest extends TestCase
         self::assertNotFalse($query);
         self::assertLessThan($permission, $moduleLoad);
         self::assertLessThan($query, $permission);
-        $frame = strpos($this->component, "createFrame()->begin('')");
-        self::assertNotFalse($frame);
-        self::assertLessThan($permission, $frame);
+        self::assertStringNotContainsString('createFrame', $this->component);
+        self::assertStringContainsString("\$this->createFrame()->begin('')", $this->template);
         self::assertStringContainsString('setFrameMode(true)', $this->component);
-        self::assertGreaterThanOrEqual(3, substr_count($this->component, '$frame->end()'));
+        self::assertSame(1, substr_count($this->template, '$frame->end()'));
         self::assertStringNotContainsString('StartResultCache', $this->component);
+    }
+
+    public function testEveryValidProductRendersTemplateWithSafeDefaultResult(): void
+    {
+        $result = strpos($this->component, "'ACCESS_ALLOWED' => false");
+        $moduleLoad = strpos($this->component, "Loader::includeModule('kk.pricewatch')");
+        $permission = strpos($this->component, 'Access::canRead()');
+        $query = strpos($this->component, 'StaffProductPriceReadService())->read');
+        $template = strpos($this->component, '$this->includeComponentTemplate()');
+
+        self::assertNotFalse($result);
+        self::assertNotFalse($template);
+        self::assertLessThan($moduleLoad, $result);
+        self::assertLessThan($permission, $moduleLoad);
+        self::assertLessThan($query, $permission);
+        self::assertLessThan($template, $query);
+        self::assertSame(1, substr_count($this->component, 'includeComponentTemplate'));
+        self::assertStringContainsString("'ROWS' => []", $this->component);
+        self::assertStringContainsString("Loader::includeModule('kk.pricewatch') && Access::canRead()", $this->component);
+        self::assertStringContainsString(
+            "if ((\$arResult['ACCESS_ALLOWED'] ?? false) === true && (\$arResult['ROWS'] ?? []) !== [])",
+            $this->template
+        );
     }
 
     public function testFrontendPathContainsNoCollectionHistoryOrWrites(): void
@@ -55,14 +77,22 @@ final class ProductPricesComponentSourceTest extends TestCase
         self::assertStringNotContainsString('json_encode', $this->template);
     }
 
+    public function testDeniedTemplateRenderIsCompletelyEmptyAndDoesNotPoisonAuthorizedRender(): void
+    {
+        $url = 'https://secret.example.test/item?competitor=Hidden';
+        self::assertSame('', $this->renderFixture($url, 'denied'));
+
+        $authorized = $this->renderFixture($url, 'allowed');
+        self::assertStringContainsString('Test', $authorized);
+        self::assertStringContainsString('competitor=Hidden', $authorized);
+
+        self::assertSame('', $this->renderFixture($url, 'denied'));
+    }
+
     #[DataProvider('renderedUrlCases')]
     public function testOnlyAbsoluteHttpUrlsBecomeClickable(string $url, bool $clickable): void
     {
-        $fixture = __DIR__ . '/fixtures/render_product_prices_template.php';
-        $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($fixture) . ' ' . escapeshellarg($url);
-        exec($command, $lines, $exitCode);
-        self::assertSame(0, $exitCode);
-        $html = implode("\n", $lines);
+        $html = $this->renderFixture($url, 'allowed');
 
         self::assertSame($clickable, str_contains($html, '<a href='));
         if ($clickable) {
@@ -80,5 +110,16 @@ final class ProductPricesComponentSourceTest extends TestCase
             'javascript' => ['javascript:alert(1)', false],
             'data' => ['data:text/html,test', false],
         ];
+    }
+
+    private function renderFixture(string $url, string $access): string
+    {
+        $fixture = __DIR__ . '/fixtures/render_product_prices_template.php';
+        $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($fixture) . ' '
+            . escapeshellarg($url) . ' ' . escapeshellarg($access);
+        exec($command, $lines, $exitCode);
+        self::assertSame(0, $exitCode);
+
+        return implode("\n", $lines);
     }
 }
