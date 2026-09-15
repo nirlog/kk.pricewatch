@@ -9,6 +9,9 @@ use KK\PriceWatch\Model\ProductUrl;
 
 final class StaffProductPriceReadService
 {
+    public const DEFAULT_MAX_ROWS = 50;
+    public const MAX_ROWS = 200;
+
     /** @var callable(): int */
     private $now;
 
@@ -19,17 +22,26 @@ final class StaffProductPriceReadService
         $this->now = $now ?? static fn(): int => time();
     }
 
-    /** @return list<array<string, mixed>> */
-    public function read(int $productId, int $maxAgeSeconds = 86400): array
+    public function read(
+        int $productId,
+        int $maxAgeSeconds = 86400,
+        int $maxRows = self::DEFAULT_MAX_ROWS,
+    ): StaffProductPriceReadResult
     {
         if ($productId <= 0) {
-            return [];
+            return new StaffProductPriceReadResult([], false);
         }
 
         $maxAgeSeconds = max(0, $maxAgeSeconds);
+        $maxRows = self::normalizeMaxRows($maxRows);
         $now = ($this->now)();
+        $rows = $this->repository->findActiveByExactProductId($productId, $maxRows + 1);
+        $hasMore = count($rows) > $maxRows;
+        if ($hasMore) {
+            $rows = array_slice($rows, 0, $maxRows);
+        }
 
-        return array_map(static function (array $row) use ($maxAgeSeconds, $now): array {
+        $rows = array_map(static function (array $row) use ($maxAgeSeconds, $now): array {
             $lastSuccess = $row['LAST_SUCCESS_AT'] ?? null;
             $successTimestamp = self::timestamp($lastSuccess);
             $hasPrice = $row['CURRENT_PRICE'] !== null
@@ -51,7 +63,19 @@ final class StaffProductPriceReadService
                     && $successTimestamp !== null
                     && $successTimestamp < ($now - $maxAgeSeconds),
             ];
-        }, $this->repository->findActiveByExactProductId($productId));
+        }, $rows);
+
+        return new StaffProductPriceReadResult($rows, $hasMore);
+    }
+
+    public static function normalizeMaxRows(mixed $value): int
+    {
+        $validated = filter_var($value, FILTER_VALIDATE_INT);
+        if ($validated === false || $validated < 1) {
+            return self::DEFAULT_MAX_ROWS;
+        }
+
+        return min($validated, self::MAX_ROWS);
     }
 
     private static function timestamp(mixed $value): ?int

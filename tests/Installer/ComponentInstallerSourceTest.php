@@ -18,14 +18,14 @@ final class ComponentInstallerSourceTest extends TestCase
         self::assertStringNotContainsString('uninstallDatabase', $source);
     }
 
-    public function testVersionAndUpdateArePresentationOnly(): void
+    public function testVersionAndUpdateInstallAdditiveSchemaAndComponent(): void
     {
         $root = dirname(__DIR__, 2);
         $version = (string) file_get_contents($root . '/install/version.php');
-        $updater = (string) file_get_contents($root . '/install/updates/0.12.1/updater.php');
-        self::assertStringContainsString("'VERSION' => '0.12.1'", $version);
+        $updater = (string) file_get_contents($root . '/install/updates/0.13.0/updater.php');
+        self::assertStringContainsString("'VERSION' => '0.13.0'", $version);
         self::assertStringContainsString('ComponentInstaller', $updater);
-        self::assertStringNotContainsString('SchemaInstaller', $updater);
+        self::assertStringContainsString('SchemaInstaller', $updater);
         self::assertStringNotContainsString('Table::', $updater);
     }
 }

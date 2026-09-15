@@ -9,8 +9,13 @@ use KK\PriceWatch\Model\ProductCompetitorTable;
 
 final class OrmStaffProductPriceRepository implements StaffProductPriceRepositoryInterface
 {
-    public function findActiveByExactProductId(int $productId): array
+    private const DEFAULT_QUERY_LIMIT = 51;
+    private const MAX_QUERY_LIMIT = 201;
+
+    public function findActiveByExactProductId(int $productId, int $limit): array
     {
+        $limit = $limit > 0 ? min($limit, self::MAX_QUERY_LIMIT) : self::DEFAULT_QUERY_LIMIT;
+
         return ProductCompetitorTable::getList([
             'select' => [
                 'ID', 'COMPETITOR_ID', 'URL', 'CURRENT_PRICE', 'CURRENCY', 'STATUS',
@@ -28,6 +33,7 @@ final class OrmStaffProductPriceRepository implements StaffProductPriceRepositor
                 'COMPETITOR_NAME' => 'ASC',
                 'ID' => 'ASC',
             ],
+            'limit' => $limit,
         ])->fetchAll();
     }
 }

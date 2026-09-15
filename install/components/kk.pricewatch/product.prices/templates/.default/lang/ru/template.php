@@ -6,3 +6,5 @@ $MESS['KK_PRICEWATCH_ERROR'] = 'Не удалось обновить';
 $MESS['KK_PRICEWATCH_STALE'] = 'Цена устарела';
 $MESS['KK_PRICEWATCH_UPDATED'] = 'Обновлено';
 $MESS['KK_PRICEWATCH_OPEN'] = 'Открыть товар ↗';
+$MESS['KK_PRICEWATCH_READ_FAILED'] = 'Цены конкурентов временно недоступны';
+$MESS['KK_PRICEWATCH_HAS_MORE'] = 'Показаны первые #COUNT# связей мониторинга';

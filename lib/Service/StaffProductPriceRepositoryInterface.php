@@ -7,5 +7,5 @@ namespace KK\PriceWatch\Service;
 interface StaffProductPriceRepositoryInterface
 {
     /** @return list<array<string, mixed>> */
-    public function findActiveByExactProductId(int $productId): array;
+    public function findActiveByExactProductId(int $productId, int $limit): array;
 }

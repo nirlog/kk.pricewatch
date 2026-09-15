@@ -32,6 +32,7 @@ final class SchemaInstaller
             Connection::INDEX_UNIQUE
         );
         $this->ensureIndex($table, 'ix_kk_pw_pc_product', ['PRODUCT_ID']);
+        $this->ensureIndex($table, 'ix_kk_pw_pc_product_active_competitor', ['PRODUCT_ID', 'ACTIVE', 'COMPETITOR_ID']);
         $this->ensureIndex($table, 'ix_kk_pw_pc_competitor', ['COMPETITOR_ID']);
 
         $historyTable = PriceHistoryTable::getTableName();

@@ -54,9 +54,12 @@ final class ProductPricesComponentSourceTest extends TestCase
         self::assertStringContainsString("'ROWS' => []", $this->component);
         self::assertStringContainsString("Loader::includeModule('kk.pricewatch') && Access::canRead()", $this->component);
         self::assertStringContainsString(
-            "if ((\$arResult['ACCESS_ALLOWED'] ?? false) === true && (\$arResult['ROWS'] ?? []) !== [])",
+            "if ((\$arResult['ACCESS_ALLOWED'] ?? false) === true && ((\$arResult['ROWS'] ?? []) !== [] || (\$arResult['READ_FAILED'] ?? false) === true))",
             $this->template
         );
+        self::assertStringContainsString("'READ_FAILED' => false", $this->component);
+        self::assertStringContainsString('catch (\\Throwable)', $this->component);
+        self::assertStringContainsString("'MAX_ROWS' => 50", $this->component);
     }
 
     public function testFrontendPathContainsNoCollectionHistoryOrWrites(): void
@@ -87,6 +90,14 @@ final class ProductPricesComponentSourceTest extends TestCase
         self::assertStringContainsString('competitor=Hidden', $authorized);
 
         self::assertSame('', $this->renderFixture($url, 'denied'));
+    }
+
+    public function testFailureStateIsNeutralAndStaffOnly(): void
+    {
+        $authorized = $this->renderFixture('https://secret.example.test/item', 'failed');
+        self::assertStringContainsString('KK_PRICEWATCH_READ_FAILED', $authorized);
+        self::assertStringNotContainsString('secret.example.test', $authorized);
+        self::assertSame('', $this->renderFixture('https://secret.example.test/item', 'denied-failed'));
     }
 
     #[DataProvider('renderedUrlCases')]
