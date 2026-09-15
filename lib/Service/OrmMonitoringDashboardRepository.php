@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace KK\PriceWatch\Service;
 
+use Bitrix\Main\Type\DateTime as BitrixDateTime;
 use DateTimeInterface;
 use KK\PriceWatch\Model\ProductCompetitorTable;
 
@@ -52,8 +53,16 @@ final class OrmMonitoringDashboardRepository implements MonitoringDashboardRepos
             if (isset($filters[$field])) $result['=' . $field] = $filters[$field];
         }
         $health = $forcedHealth ?? (string) ($filters['HEALTH'] ?? '');
-        $healthFilter = MonitoringHealth::ormFilter($health, $cutoff);
+        $healthFilter = MonitoringHealth::ormFilter($health, self::toBitrixDateTime($cutoff));
         if ($healthFilter !== []) $result[] = $healthFilter;
+        return $result;
+    }
+
+    private static function toBitrixDateTime(DateTimeInterface $value): BitrixDateTime
+    {
+        $result = new BitrixDateTime();
+        $result->setTimestamp($value->getTimestamp());
+
         return $result;
     }
 }
