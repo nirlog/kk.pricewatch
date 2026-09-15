@@ -42,8 +42,10 @@ namespace {
     define('B_PROLOG_INCLUDED', true);
     require dirname(__DIR__, 3) . '/lib/Model/ProductUrl.php';
     $url = (string) ($argv[1] ?? '');
-    $accessAllowed = ($argv[2] ?? 'allowed') === 'allowed';
-    $arResult = ['ACCESS_ALLOWED' => $accessAllowed, 'ROWS' => [[
+    $mode = $argv[2] ?? 'allowed';
+    $accessAllowed = in_array($mode, ['allowed', 'failed'], true);
+    $readFailed = in_array($mode, ['failed', 'denied-failed'], true);
+    $arResult = ['ACCESS_ALLOWED' => $accessAllowed, 'READ_FAILED' => $readFailed, 'HAS_MORE' => false, 'MAX_ROWS' => 50, 'ROWS' => $readFailed ? [] : [[
         'competitor_name' => 'Test', 'current_price' => null, 'currency' => null,
         'status' => 'new', 'is_stale' => false, 'last_success_at' => null,
         'exact_url' => $url, 'is_url_safe' => ProductUrl::isAcceptedHttpUrl($url),

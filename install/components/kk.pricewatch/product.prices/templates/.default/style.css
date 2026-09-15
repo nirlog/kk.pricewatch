@@ -5,3 +5,4 @@
 .kk-pricewatch-product-prices__item { display: grid; gap: 4px 16px; grid-template-columns: minmax(140px, 1fr) auto; padding: 10px 0; }
 .kk-pricewatch-product-prices__item + .kk-pricewatch-product-prices__item { border-top: 1px solid #e7eaee; }
 .kk-pricewatch-product-prices__state { color: #a65d00; }
+.kk-pricewatch-product-prices__notice { color: #68717c; font-size: 12px; margin: 10px 0 0; }

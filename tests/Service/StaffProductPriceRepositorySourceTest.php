@@ -18,6 +18,10 @@ final class StaffProductPriceRepositorySourceTest extends TestCase
         self::assertStringContainsString("'COMPETITOR_SORT' => 'ASC'", $source);
         self::assertStringContainsString("'COMPETITOR_NAME' => 'ASC'", $source);
         self::assertStringContainsString("'ID' => 'ASC'", $source);
+        self::assertStringContainsString("'limit' => \$limit", $source);
+        self::assertStringContainsString('MAX_QUERY_LIMIT = 201', $source);
+        self::assertSame(1, substr_count($source, '::getList('));
+        self::assertStringNotContainsString('count(', $source);
         self::assertStringNotContainsString('PriceHistoryTable', $source);
         self::assertStringNotContainsString('PARENT', $source);
         self::assertStringNotContainsString('OFFERS', $source);

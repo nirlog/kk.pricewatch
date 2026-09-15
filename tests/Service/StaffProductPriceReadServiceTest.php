@@ -14,7 +14,9 @@ final class StaffProductPriceReadServiceTest extends TestCase
     public function testInvalidProductNeverQueriesRepository(): void
     {
         $repository = new RecordingRepository([]);
-        self::assertSame([], (new StaffProductPriceReadService($repository))->read(0));
+        $result = (new StaffProductPriceReadService($repository))->read(0);
+        self::assertSame([], $result->rows);
+        self::assertFalse($result->hasMore);
         self::assertSame([], $repository->productIds);
     }
 
@@ -27,9 +29,11 @@ final class StaffProductPriceReadServiceTest extends TestCase
         ]);
         $service = new StaffProductPriceReadService($repository, static fn(): int => strtotime('2026-09-14 12:00:00 UTC'));
 
-        $rows = $service->read(777, 3600);
+        $result = $service->read(777, 3600);
+        $rows = $result->rows;
 
         self::assertSame([777], $repository->productIds);
+        self::assertSame([51], $repository->limits);
         self::assertSame('1234567890123456.78', $rows[0]['current_price']);
         self::assertFalse($rows[0]['is_stale']);
         self::assertTrue($rows[0]['is_url_safe']);
@@ -42,8 +46,38 @@ final class StaffProductPriceReadServiceTest extends TestCase
     public function testZeroMaximumAgeDisablesAgeMarking(): void
     {
         $repository = new RecordingRepository([$this->row(1, '10.00', 'RUB', 'success', '2000-01-01 00:00:00')]);
-        $rows = (new StaffProductPriceReadService($repository, static fn(): int => 2_000_000_000))->read(5, 0);
+        $rows = (new StaffProductPriceReadService($repository, static fn(): int => 2_000_000_000))->read(5, 0)->rows;
         self::assertFalse($rows[0]['is_stale']);
+    }
+
+    public function testMaximumRowsUsesNPlusOneAndReportsTruncation(): void
+    {
+        $repository = new RecordingRepository(array_fill(0, 4, $this->row(1, '10.00', 'RUB', 'success', '2026-09-14 12:00:00')));
+        $result = (new StaffProductPriceReadService($repository))->read(9, 86400, 3);
+
+        self::assertCount(3, $result->rows);
+        self::assertTrue($result->hasMore);
+        self::assertSame([4], $repository->limits);
+    }
+
+    public function testExactlyMaximumRowsIsNotTruncated(): void
+    {
+        $repository = new RecordingRepository(array_fill(0, 3, $this->row(1, '10.00', 'RUB', 'success', '2026-09-14 12:00:00')));
+        $result = (new StaffProductPriceReadService($repository))->read(9, 86400, 3);
+
+        self::assertCount(3, $result->rows);
+        self::assertFalse($result->hasMore);
+        self::assertSame([4], $repository->limits);
+    }
+
+    public function testMaximumRowsNormalizationIsBounded(): void
+    {
+        self::assertSame(50, StaffProductPriceReadService::normalizeMaxRows(null));
+        self::assertSame(50, StaffProductPriceReadService::normalizeMaxRows('invalid'));
+        self::assertSame(50, StaffProductPriceReadService::normalizeMaxRows(0));
+        self::assertSame(50, StaffProductPriceReadService::normalizeMaxRows(-1));
+        self::assertSame(1, StaffProductPriceReadService::normalizeMaxRows(1));
+        self::assertSame(200, StaffProductPriceReadService::normalizeMaxRows(999));
     }
 
     private function row(int $id, ?string $price, ?string $currency, string $status, ?string $lastSuccess): array
@@ -60,10 +94,12 @@ final class StaffProductPriceReadServiceTest extends TestCase
 final class RecordingRepository implements StaffProductPriceRepositoryInterface
 {
     /** @var list<int> */ public array $productIds = [];
+    /** @var list<int> */ public array $limits = [];
     public function __construct(private readonly array $rows) {}
-    public function findActiveByExactProductId(int $productId): array
+    public function findActiveByExactProductId(int $productId, int $limit): array
     {
         $this->productIds[] = $productId;
-        return $this->rows;
+        $this->limits[] = $limit;
+        return array_slice($this->rows, 0, $limit);
     }
 }

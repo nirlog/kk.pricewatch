@@ -22,10 +22,13 @@ $formatTime = static function (mixed $value): string {
     }
     return '';
 };
-?><?php if (($arResult['ACCESS_ALLOWED'] ?? false) === true && ($arResult['ROWS'] ?? []) !== []): ?>
+?><?php if (($arResult['ACCESS_ALLOWED'] ?? false) === true && (($arResult['ROWS'] ?? []) !== [] || ($arResult['READ_FAILED'] ?? false) === true)): ?>
 <section class="kk-pricewatch-product-prices" aria-label="<?= HtmlFilter::encode((string) Loc::getMessage('KK_PRICEWATCH_HEADING')) ?>">
     <div class="kk-pricewatch-product-prices__staff"><?= HtmlFilter::encode((string) Loc::getMessage('KK_PRICEWATCH_STAFF_ONLY')) ?></div>
     <h3 class="kk-pricewatch-product-prices__heading"><?= HtmlFilter::encode((string) Loc::getMessage('KK_PRICEWATCH_HEADING')) ?></h3>
+    <?php if (($arResult['READ_FAILED'] ?? false) === true): ?>
+        <p class="kk-pricewatch-product-prices__state"><?= HtmlFilter::encode((string) Loc::getMessage('KK_PRICEWATCH_READ_FAILED')) ?></p>
+    <?php else: ?>
     <ul class="kk-pricewatch-product-prices__list">
         <?php foreach ($arResult['ROWS'] as $row): ?>
             <li class="kk-pricewatch-product-prices__item">
@@ -51,5 +54,9 @@ $formatTime = static function (mixed $value): string {
             </li>
         <?php endforeach; ?>
     </ul>
+    <?php if (($arResult['HAS_MORE'] ?? false) === true): ?>
+        <p class="kk-pricewatch-product-prices__notice"><?= HtmlFilter::encode(str_replace('#COUNT#', (string) ($arResult['MAX_ROWS'] ?? 50), (string) Loc::getMessage('KK_PRICEWATCH_HAS_MORE'))) ?></p>
+    <?php endif; ?>
+    <?php endif; ?>
 </section>
 <?php endif; $frame->end(); ?>
