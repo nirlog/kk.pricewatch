@@ -14,11 +14,11 @@ final class UpdatePackageTest extends TestCase
         $root = dirname(__DIR__, 2);
         $directory = sys_get_temp_dir() . '/kk-pricewatch-' . bin2hex(random_bytes(8));
         self::assertTrue(mkdir($directory));
-        $archivePath = $directory . '/0.13.0.tar.gz';
+        $archivePath = $directory . '/0.14.0.tar.gz';
 
         exec(
             escapeshellarg(PHP_BINARY) . ' '
-            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.13.0 '
+            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.14.0 '
             . escapeshellarg($archivePath),
             $output,
             $exitCode
@@ -32,11 +32,14 @@ final class UpdatePackageTest extends TestCase
             self::assertTrue(isset($archive['description.en']));
             self::assertTrue(isset($archive['install/version.php']));
             self::assertTrue(isset($archive['install/admin/kk_pricewatch_price_history.php']));
+            self::assertTrue(isset($archive['install/admin/kk_pricewatch_monitoring.php']));
+            self::assertTrue(isset($archive['admin/monitoring.php']));
+            self::assertTrue(isset($archive['lib/Service/MonitoringDashboardService.php']));
             self::assertTrue(isset($archive['install/components/kk.pricewatch/product.prices/class.php']));
 
             foreach (new \RecursiveIteratorIterator($archive) as $file) {
                 self::assertStringNotContainsString(
-                    '/install/updates/0.13.0/',
+                    '/install/updates/0.14.0/',
                     str_replace('\\', '/', $file->getPathname())
                 );
             }
@@ -64,11 +67,12 @@ final class UpdatePackageTest extends TestCase
         self::assertFileDoesNotExist($archivePath);
     }
 
-    public function testProductComponentUpdateRunsIdempotentSchemaAndComponentInstallation(): void
+    public function testMonitoringUpdateRefreshesAdminOnly(): void
     {
         $root = dirname(__DIR__, 2);
-        $updater = (string) file_get_contents($root . '/install/updates/0.13.0/updater.php');
-        self::assertStringContainsString('SchemaInstaller', $updater);
-        self::assertStringContainsString('ComponentInstaller', $updater);
+        $updater = (string) file_get_contents($root . '/install/updates/0.14.0/updater.php');
+        self::assertStringContainsString('AdminInstaller', $updater);
+        self::assertStringNotContainsString('SchemaInstaller', $updater);
+        self::assertStringNotContainsString('ComponentInstaller', $updater);
     }
 }

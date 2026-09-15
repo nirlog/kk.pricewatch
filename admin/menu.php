@@ -20,6 +20,11 @@ return [
     'page_icon' => 'default_page_icon',
     'items_id' => 'menu_kk_pricewatch',
     'items' => [[
+        'text' => Loc::getMessage('KK_PRICEWATCH_MENU_MONITORING'),
+        'title' => Loc::getMessage('KK_PRICEWATCH_MENU_MONITORING_TITLE'),
+        'url' => 'kk_pricewatch_monitoring.php?lang=' . LANGUAGE_ID,
+        'more_url' => [],
+    ], [
         'text' => Loc::getMessage('KK_PRICEWATCH_MENU_COMPETITORS'),
         'title' => Loc::getMessage('KK_PRICEWATCH_MENU_COMPETITORS_TITLE'),
         'url' => 'kk_pricewatch_competitors.php?lang=' . LANGUAGE_ID,
