@@ -14,11 +14,11 @@ final class UpdatePackageTest extends TestCase
         $root = dirname(__DIR__, 2);
         $directory = sys_get_temp_dir() . '/kk-pricewatch-' . bin2hex(random_bytes(8));
         self::assertTrue(mkdir($directory));
-        $archivePath = $directory . '/0.14.0.tar.gz';
+        $archivePath = $directory . '/0.14.1.tar.gz';
 
         exec(
             escapeshellarg(PHP_BINARY) . ' '
-            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.14.0 '
+            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.14.1 '
             . escapeshellarg($archivePath),
             $output,
             $exitCode
@@ -39,7 +39,7 @@ final class UpdatePackageTest extends TestCase
 
             foreach (new \RecursiveIteratorIterator($archive) as $file) {
                 self::assertStringNotContainsString(
-                    '/install/updates/0.14.0/',
+                    '/install/updates/0.14.1/',
                     str_replace('\\', '/', $file->getPathname())
                 );
             }
@@ -67,12 +67,13 @@ final class UpdatePackageTest extends TestCase
         self::assertFileDoesNotExist($archivePath);
     }
 
-    public function testMonitoringUpdateRefreshesAdminOnly(): void
+    public function testMonitoringRuntimeHotfixPerformsNoInstallerOrDataOperations(): void
     {
         $root = dirname(__DIR__, 2);
-        $updater = (string) file_get_contents($root . '/install/updates/0.14.0/updater.php');
-        self::assertStringContainsString('AdminInstaller', $updater);
+        $updater = (string) file_get_contents($root . '/install/updates/0.14.1/updater.php');
+        self::assertStringNotContainsString('AdminInstaller', $updater);
         self::assertStringNotContainsString('SchemaInstaller', $updater);
         self::assertStringNotContainsString('ComponentInstaller', $updater);
+        self::assertStringNotContainsString('Table::', $updater);
     }
 }

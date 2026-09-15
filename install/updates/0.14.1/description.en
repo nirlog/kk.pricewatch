@@ -1,0 +1,1 @@
+Fixes the monitoring dashboard runtime date filter for compatibility with the Bitrix ORM.

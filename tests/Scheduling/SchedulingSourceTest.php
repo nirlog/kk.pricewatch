@@ -48,6 +48,6 @@ final class SchedulingSourceTest extends TestCase
         self::assertStringContainsString('(new ScheduledAgentInstaller())->install()', $upgrade);
         self::assertStringContainsString("is_file(__DIR__ . '/include.php')", $upgrade);
         self::assertStringNotContainsString('CAgent::', $upgrade);
-        self::assertStringContainsString("'VERSION' => '0.14.0'", file_get_contents($root . '/install/version.php'));
+        self::assertStringContainsString("'VERSION' => '0.14.1'", file_get_contents($root . '/install/version.php'));
     }
 }

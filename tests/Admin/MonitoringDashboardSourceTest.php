@@ -35,6 +35,16 @@ final class MonitoringDashboardSourceTest extends TestCase
         self::assertStringNotContainsString('PriceHistoryTable', $source);
     }
 
+    public function testRepositoryAdaptsDomainCutoffAtBitrixOrmBoundary(): void
+    {
+        $source = file_get_contents(dirname(__DIR__, 2) . '/lib/Service/OrmMonitoringDashboardRepository.php');
+        self::assertStringContainsString('use Bitrix\\Main\\Type\\DateTime as BitrixDateTime;', $source);
+        self::assertStringContainsString('self::toBitrixDateTime($cutoff)', $source);
+        self::assertStringContainsString('private static function toBitrixDateTime(DateTimeInterface $value): BitrixDateTime', $source);
+        self::assertStringContainsString('$result->setTimestamp($value->getTimestamp());', $source);
+        self::assertStringNotContainsString('MonitoringHealth::ormFilter($health, $cutoff)', $source);
+    }
+
     public function testMenuProxyAndLocalizationExist(): void
     {
         $root = dirname(__DIR__, 2);
