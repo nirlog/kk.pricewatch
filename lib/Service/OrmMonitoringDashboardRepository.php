@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace KK\PriceWatch\Service;
 
 use Bitrix\Main\Type\DateTime as BitrixDateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use KK\PriceWatch\Model\ProductCompetitorTable;
 
@@ -37,8 +38,19 @@ final class OrmMonitoringDashboardRepository implements MonitoringDashboardRepos
             'offset' => max(0, $offset),
         ]);
         $rows = [];
-        while ($row = $result->fetch()) $rows[] = $row;
+        while ($row = $result->fetch()) $rows[] = self::normalizeRow($row);
         return $rows;
+    }
+
+    private static function normalizeRow(array $row): array
+    {
+        foreach (['LAST_CHECK_AT', 'LAST_SUCCESS_AT'] as $field) {
+            if (($row[$field] ?? null) instanceof BitrixDateTime) {
+                $row[$field] = (new DateTimeImmutable())->setTimestamp($row[$field]->getTimestamp());
+            }
+        }
+
+        return $row;
     }
 
     private function scope(): array

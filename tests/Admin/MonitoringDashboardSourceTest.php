@@ -46,8 +46,12 @@ final class MonitoringDashboardSourceTest extends TestCase
         self::assertStringContainsString('BitrixDateTime::createFromTimestamp($value->getTimestamp())', $source);
         self::assertStringContainsString('if (is_array($value))', $source);
         self::assertStringContainsString('$value[$key] = self::adaptFilterForBitrix($item);', $source);
+        self::assertStringContainsString('self::normalizeRow($row)', $source);
+        self::assertStringContainsString("['LAST_CHECK_AT', 'LAST_SUCCESS_AT']", $source);
+        self::assertStringContainsString('(new DateTimeImmutable())->setTimestamp($row[$field]->getTimestamp())', $source);
         self::assertStringNotContainsString('MonitoringHealth::ormFilter($health, self::', $source);
-        self::assertStringNotContainsString('->setTimestamp(', $source);
+        self::assertStringNotContainsString('$value->setTimestamp(', $source);
+        self::assertStringNotContainsString('$row[$field]->setTimestamp(', $source);
     }
 
     public function testMenuProxyAndLocalizationExist(): void
