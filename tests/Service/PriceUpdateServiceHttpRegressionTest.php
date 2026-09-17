@@ -5,6 +5,14 @@ declare(strict_types=1);
 namespace Bitrix\Main\Type {
     final class DateTime
     {
+        public function __construct(private readonly int $timestamp = 0)
+        {
+        }
+
+        public function getTimestamp(): int
+        {
+            return $this->timestamp;
+        }
     }
 }
 

@@ -66,6 +66,13 @@ $list->AddHeaders([
 ]);
 
 $safe = static fn(mixed $value): string => htmlspecialcharsbx((string) $value);
+$dateTime = static function (mixed $value) use ($safe): string {
+    if ($value instanceof \DateTimeInterface) {
+        return $safe($value->format('d.m.Y H:i:s'));
+    }
+
+    return '—';
+};
 $money = static function (string $value, string $currency) use ($safe): string {
     [$whole, $fraction] = array_pad(explode('.', $value, 2), 2, '');
     $whole = preg_replace('/\B(?=(\d{3})+(?!\d))/', ' ', $whole) ?? $whole;
@@ -87,7 +94,8 @@ if (!$readFailed && $dashboard !== null) {
         $row->AddViewField('STATUS', $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_STATUS_' . strtoupper((string) $item['STATUS']))));
         $healthKey = !$item['has_successful_value'] ? 'NO_PRICE' : ($item['is_stale'] ? 'STALE' : ($item['is_healthy'] ? 'HEALTHY' : 'ERROR'));
         $row->AddViewField('HEALTH', $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_HEALTH_' . $healthKey)));
-        foreach (['LAST_CHECK_AT', 'LAST_SUCCESS_AT', 'ERROR_CODE'] as $field) $row->AddViewField($field, $safe($item[$field] ?? '—'));
+        foreach (['LAST_CHECK_AT', 'LAST_SUCCESS_AT'] as $field) $row->AddViewField($field, $dateTime($item[$field] ?? null));
+        $row->AddViewField('ERROR_CODE', $safe($item['ERROR_CODE'] ?? '—'));
         $exactUrl = (string) $item['URL'];
         $row->AddViewField('SOURCE', ProductUrl::isAcceptedHttpUrl($exactUrl)
             ? '<a href="' . $safe($exactUrl) . '" target="_blank" rel="noopener noreferrer">' . $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_ACTION_SOURCE')) . '</a>'
