@@ -66,12 +66,10 @@ $list->AddHeaders([
 ]);
 
 $safe = static fn(mixed $value): string => htmlspecialcharsbx((string) $value);
-$dateTime = static function (mixed $value) use ($safe): string {
-    if ($value instanceof \DateTimeInterface) {
-        return $safe($value->format('d.m.Y H:i:s'));
-    }
-
-    return '—';
+$formatDateTime = static function (mixed $value): string {
+    return $value instanceof \DateTimeInterface
+        ? $value->format('d.m.Y H:i:s')
+        : '—';
 };
 $money = static function (string $value, string $currency) use ($safe): string {
     [$whole, $fraction] = array_pad(explode('.', $value, 2), 2, '');
@@ -83,7 +81,11 @@ if (!$readFailed && $dashboard !== null) {
         $id = (int) $item['ID'];
         $productId = (int) $item['PRODUCT_ID'];
         $editUrl = 'kk_pricewatch_product_competitor_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $id . '&PRODUCT_ID=' . $productId;
-        $row = &$list->AddRow($id, $item, $editUrl, Loc::getMessage('KK_PRICEWATCH_MONITORING_ACTION_OPEN'));
+        $rowData = $item;
+        foreach (['LAST_CHECK_AT', 'LAST_SUCCESS_AT'] as $field) {
+            $rowData[$field] = $formatDateTime($item[$field] ?? null);
+        }
+        $row = &$list->AddRow($id, $rowData, $editUrl, Loc::getMessage('KK_PRICEWATCH_MONITORING_ACTION_OPEN'));
         $productLabel = ($productNames[$productId] ?? '') !== '' ? $productNames[$productId] . ' (#' . $productId . ')' : '#' . $productId;
         $row->AddViewField('ID', '<a href="' . $safe($editUrl) . '">#' . $id . '</a>');
         $row->AddViewField('PRODUCT_ID', $safe($productLabel));
@@ -94,7 +96,7 @@ if (!$readFailed && $dashboard !== null) {
         $row->AddViewField('STATUS', $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_STATUS_' . strtoupper((string) $item['STATUS']))));
         $healthKey = !$item['has_successful_value'] ? 'NO_PRICE' : ($item['is_stale'] ? 'STALE' : ($item['is_healthy'] ? 'HEALTHY' : 'ERROR'));
         $row->AddViewField('HEALTH', $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_HEALTH_' . $healthKey)));
-        foreach (['LAST_CHECK_AT', 'LAST_SUCCESS_AT'] as $field) $row->AddViewField($field, $dateTime($item[$field] ?? null));
+        foreach (['LAST_CHECK_AT', 'LAST_SUCCESS_AT'] as $field) $row->AddViewField($field, $safe($formatDateTime($item[$field] ?? null)));
         $row->AddViewField('ERROR_CODE', $safe($item['ERROR_CODE'] ?? '—'));
         $exactUrl = (string) $item['URL'];
         $row->AddViewField('SOURCE', ProductUrl::isAcceptedHttpUrl($exactUrl)

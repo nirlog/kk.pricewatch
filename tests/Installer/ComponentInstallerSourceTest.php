@@ -23,7 +23,7 @@ final class ComponentInstallerSourceTest extends TestCase
         $root = dirname(__DIR__, 2);
         $version = (string) file_get_contents($root . '/install/version.php');
         $updater = (string) file_get_contents($root . '/install/updates/0.13.0/updater.php');
-        self::assertStringContainsString("'VERSION' => '0.14.3'", $version);
+        self::assertStringContainsString("'VERSION' => '0.14.4'", $version);
         self::assertStringContainsString('ComponentInstaller', $updater);
         self::assertStringContainsString('SchemaInstaller', $updater);
         self::assertStringNotContainsString('Table::', $updater);

@@ -25,12 +25,17 @@ final class MonitoringDashboardSourceTest extends TestCase
         self::assertStringContainsString('catch (Throwable)', $page);
     }
 
-    public function testOrmDatesAreFormattedBeforeEscaping(): void
+    public function testDomainDatesAreFormattedForRawRowsAndViewFields(): void
     {
         $page = file_get_contents(dirname(__DIR__, 2) . '/admin/monitoring.php');
-        self::assertStringContainsString('if ($value instanceof \\DateTimeInterface)', $page);
-        self::assertStringContainsString('return $safe($value->format(\'d.m.Y H:i:s\'));', $page);
-        self::assertStringContainsString('$dateTime($item[$field] ?? null)', $page);
+        self::assertStringContainsString('$formatDateTime = static function (mixed $value): string', $page);
+        self::assertStringContainsString('$value instanceof \\DateTimeInterface', $page);
+        self::assertStringContainsString("? \$value->format('d.m.Y H:i:s')", $page);
+        self::assertStringContainsString('$rowData = $item;', $page);
+        self::assertStringContainsString('$rowData[$field] = $formatDateTime($item[$field] ?? null);', $page);
+        self::assertStringContainsString('AddRow($id, $rowData, $editUrl', $page);
+        self::assertStringNotContainsString('AddRow($id, $item, $editUrl', $page);
+        self::assertStringContainsString('AddViewField($field, $safe($formatDateTime($item[$field] ?? null)))', $page);
         self::assertStringNotContainsString("foreach (['LAST_CHECK_AT', 'LAST_SUCCESS_AT', 'ERROR_CODE']", $page);
         self::assertStringContainsString('AddViewField(\'ERROR_CODE\', $safe($item[\'ERROR_CODE\'] ?? \'—\'))', $page);
     }

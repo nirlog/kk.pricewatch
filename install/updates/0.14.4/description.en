@@ -1,0 +1,1 @@
+Excludes DateTime objects from the monitoring admin dashboard raw row data.
