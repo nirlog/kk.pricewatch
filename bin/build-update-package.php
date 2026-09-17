@@ -57,7 +57,7 @@ if (!is_dir($outputDirectory) && !mkdir($outputDirectory, 0775, true) && !is_dir
 
 $archive = new \PharData($tarPath);
 $runtimePaths = ['admin', 'install/admin', 'install/components', 'lang', 'lib'];
-$runtimeFiles = ['include.php', 'install/index.php', 'install/version.php', 'bin/pricewatch-run.php'];
+$runtimeFiles = ['include.php', 'install/index.php', 'install/version.php', 'bin/pricewatch-run.php', 'bin/pricewatch-notify.php'];
 
 foreach ($runtimePaths as $path) {
     $iterator = new \RecursiveIteratorIterator(

@@ -8,6 +8,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\DB\Connection;
 use KK\PriceWatch\Model\CompetitorTable;
 use KK\PriceWatch\Model\PriceHistoryTable;
+use KK\PriceWatch\Model\NotificationStateTable;
 use KK\PriceWatch\Model\ProductCompetitorTable;
 
 final class SchemaInstaller
@@ -43,6 +44,10 @@ final class SchemaInstaller
         $this->ensureIndex($historyTable, 'ix_kk_pw_ph_product_date', ['PRODUCT_ID', 'COLLECTED_AT']);
         $this->ensureIndex($historyTable, 'ix_kk_pw_ph_competitor_date', ['COMPETITOR_ID', 'COLLECTED_AT']);
         $this->ensureIndex($historyTable, 'ix_kk_pw_ph_identity_date', ['PRODUCT_COMPETITOR_ID', 'URL_HASH', 'COLLECTED_AT']);
+
+        $notificationTable = NotificationStateTable::getTableName();
+        if (!$connection->isTableExists($notificationTable)) NotificationStateTable::getEntity()->createDbTable();
+        $this->ensureIndex($notificationTable, 'ux_kk_pw_ns_link_rule', ['PRODUCT_COMPETITOR_ID', 'RULE_CODE'], Connection::INDEX_UNIQUE);
     }
 
     private function ensureIndex(string $table, string $name, array $columns, ?string $type = null): void
