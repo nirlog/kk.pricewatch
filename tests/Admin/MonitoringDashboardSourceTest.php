@@ -39,10 +39,15 @@ final class MonitoringDashboardSourceTest extends TestCase
     {
         $source = file_get_contents(dirname(__DIR__, 2) . '/lib/Service/OrmMonitoringDashboardRepository.php');
         self::assertStringContainsString('use Bitrix\\Main\\Type\\DateTime as BitrixDateTime;', $source);
-        self::assertStringContainsString('self::toBitrixDateTime($cutoff)', $source);
-        self::assertStringContainsString('private static function toBitrixDateTime(DateTimeInterface $value): BitrixDateTime', $source);
-        self::assertStringContainsString('$result->setTimestamp($value->getTimestamp());', $source);
-        self::assertStringNotContainsString('MonitoringHealth::ormFilter($health, $cutoff)', $source);
+        self::assertStringContainsString('$healthFilter = MonitoringHealth::ormFilter($health, $cutoff);', $source);
+        self::assertStringContainsString('return self::adaptFilterForBitrix($result);', $source);
+        self::assertStringContainsString('private static function adaptFilterForBitrix(mixed $value): mixed', $source);
+        self::assertStringContainsString('if ($value instanceof DateTimeInterface)', $source);
+        self::assertStringContainsString('BitrixDateTime::createFromTimestamp($value->getTimestamp())', $source);
+        self::assertStringContainsString('if (is_array($value))', $source);
+        self::assertStringContainsString('$value[$key] = self::adaptFilterForBitrix($item);', $source);
+        self::assertStringNotContainsString('MonitoringHealth::ormFilter($health, self::', $source);
+        self::assertStringNotContainsString('->setTimestamp(', $source);
     }
 
     public function testMenuProxyAndLocalizationExist(): void
