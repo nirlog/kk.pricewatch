@@ -1,8 +1,8 @@
 <?php
 
-use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Filter\Options as FilterOptions;
 use KK\PriceWatch\Admin\Access;
 use KK\PriceWatch\Admin\ProductNameResolver;
 use KK\PriceWatch\Model\CollectionStatus;
@@ -21,15 +21,7 @@ Loc::loadMessages(__FILE__);
 $tableId = 'kk_pricewatch_monitoring';
 $sort = new CAdminSorting($tableId, 'LAST_CHECK_AT', 'desc');
 $list = new CAdminUiList($tableId, $sort);
-$request = Context::getCurrent()->getRequest();
 $service = new MonitoringDashboardService(new OrmMonitoringDashboardRepository());
-$filterInput = [
-    'product_id' => $request->get('find_product_id'),
-    'competitor_id' => $request->get('find_competitor_id'),
-    'status' => $request->get('find_status'),
-    'health' => $request->get('find_health'),
-];
-$filters = $service->normalizeFilters($filterInput);
 $sortField = (string) ($by ?? 'LAST_CHECK_AT');
 $sortDirection = (string) ($order ?? 'desc');
 $ormOrder = $service->order($sortField, $sortDirection);
@@ -40,16 +32,42 @@ $competitors = [];
 $productNames = [];
 $readFailed = false;
 try {
-    $dashboard = $service->load($filters, $ormOrder, $navigation->getLimit(), $navigation->getOffset());
-    $navigation->setRecordCount($dashboard->totalRows);
     $competitorQuery = CompetitorTable::getList([
         'select' => ['ID', 'NAME'], 'filter' => ['=ACTIVE' => 'Y'], 'order' => ['SORT' => 'ASC', 'NAME' => 'ASC', 'ID' => 'ASC'],
     ]);
     while ($competitor = $competitorQuery->fetch()) $competitors[(int) $competitor['ID']] = (string) $competitor['NAME'];
+
+    $filterFields = [
+        ['id' => 'PRODUCT_ID', 'name' => Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_PRODUCT'), 'type' => 'string'],
+        ['id' => 'COMPETITOR_ID', 'name' => Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_COMPETITOR'), 'type' => 'list', 'items' => $competitors],
+        ['id' => 'STATUS', 'name' => Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_STATUS'), 'type' => 'list', 'items' => [
+            CollectionStatus::NEW => Loc::getMessage('KK_PRICEWATCH_MONITORING_STATUS_NEW'),
+            CollectionStatus::SUCCESS => Loc::getMessage('KK_PRICEWATCH_MONITORING_STATUS_SUCCESS'),
+            CollectionStatus::ERROR => Loc::getMessage('KK_PRICEWATCH_MONITORING_STATUS_ERROR'),
+        ]],
+        ['id' => 'HEALTH', 'name' => Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_HEALTH'), 'type' => 'list', 'items' => [
+            MonitoringHealth::PROBLEMS => Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_HEALTH_PROBLEMS'),
+            MonitoringHealth::HEALTHY => Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_HEALTH_HEALTHY'),
+            MonitoringHealth::STALE => Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_HEALTH_STALE'),
+            MonitoringHealth::NO_PRICE => Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_HEALTH_NO_PRICE'),
+            MonitoringHealth::ERROR => Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_HEALTH_ERROR'),
+        ]],
+    ];
+    $filterData = (new FilterOptions($tableId))->getFilter($filterFields);
+    $filters = $service->normalizeFilters([
+        'product_id' => $filterData['PRODUCT_ID'] ?? null,
+        'competitor_id' => $filterData['COMPETITOR_ID'] ?? null,
+        'status' => $filterData['STATUS'] ?? null,
+        'health' => $filterData['HEALTH'] ?? null,
+    ]);
+    $dashboard = $service->load($filters, $ormOrder, $navigation->getLimit(), $navigation->getOffset());
+    $navigation->setRecordCount($dashboard->totalRows);
     $productNames = (new ProductNameResolver())->resolve(array_map(static fn(array $row): int => (int) $row['PRODUCT_ID'], $dashboard->rows));
 } catch (Throwable) {
     $readFailed = true;
 }
+
+$filterFields ??= [];
 
 $list->setNavigation($navigation, Loc::getMessage('KK_PRICEWATCH_MONITORING_NAV'), false);
 $list->AddHeaders([
@@ -124,15 +142,6 @@ else:
         <strong><?= $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_SUMMARY_' . $label)) ?>:</strong> <?= (int) $dashboard->summary[$key] ?>&nbsp;&nbsp;
     <?php endforeach; ?><br><small><?= $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_SUMMARY_NOTE')) ?></small></div></div><?php
 endif;
-
-$filterUi = new CAdminFilter($tableId . '_filter', [Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_PRODUCT')]);
-?>
-<form name="find_form" method="get" action="<?= $safe($APPLICATION->GetCurPage()) ?>">
-<?php $filterUi->Begin(); ?>
-<tr><td><?= $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_PRODUCT')) ?>:</td><td><input type="text" name="find_product_id" value="<?= isset($filters['PRODUCT_ID']) ? (int) $filters['PRODUCT_ID'] : '' ?>"></td></tr>
-<tr><td><?= $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_COMPETITOR')) ?>:</td><td><select name="find_competitor_id"><option value=""></option><?php foreach ($competitors as $id => $name): ?><option value="<?= $id ?>"<?= ($filters['COMPETITOR_ID'] ?? null) === $id ? ' selected' : '' ?>><?= $safe($name) ?></option><?php endforeach; ?></select></td></tr>
-<tr><td><?= $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_STATUS')) ?>:</td><td><select name="find_status"><option value=""></option><?php foreach ([CollectionStatus::NEW, CollectionStatus::SUCCESS, CollectionStatus::ERROR] as $status): ?><option value="<?= $status ?>"<?= ($filters['STATUS'] ?? '') === $status ? ' selected' : '' ?>><?= $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_STATUS_' . strtoupper($status))) ?></option><?php endforeach; ?></select></td></tr>
-<tr><td><?= $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_HEALTH')) ?>:</td><td><select name="find_health"><option value=""></option><?php foreach ([MonitoringHealth::PROBLEMS, MonitoringHealth::HEALTHY, MonitoringHealth::STALE, MonitoringHealth::NO_PRICE, MonitoringHealth::ERROR] as $health): ?><option value="<?= $health ?>"<?= ($filters['HEALTH'] ?? '') === $health ? ' selected' : '' ?>><?= $safe(Loc::getMessage('KK_PRICEWATCH_MONITORING_FILTER_HEALTH_' . strtoupper($health))) ?></option><?php endforeach; ?></select></td></tr>
-<?php $filterUi->Buttons(['table_id' => $tableId, 'url' => $APPLICATION->GetCurPage(), 'form' => 'find_form']); $filterUi->End(); ?>
-</form>
-<?php if (!$readFailed) $list->DisplayList(); require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';
+$list->DisplayFilter($filterFields);
+if (!$readFailed) $list->DisplayList();
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';

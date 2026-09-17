@@ -8,6 +8,19 @@ use PHPUnit\Framework\TestCase;
 
 final class MonitoringDashboardSourceTest extends TestCase
 {
+    public function testPageUsesNativeUiListFilterLifecycle(): void
+    {
+        $page = file_get_contents(dirname(__DIR__, 2) . '/admin/monitoring.php');
+        self::assertStringContainsString('use Bitrix\\Main\\UI\\Filter\\Options as FilterOptions;', $page);
+        self::assertStringContainsString('$filterData = (new FilterOptions($tableId))->getFilter($filterFields);', $page);
+        self::assertStringContainsString('$filters = $service->normalizeFilters([', $page);
+        self::assertStringContainsString('$list->DisplayFilter($filterFields);', $page);
+        self::assertStringNotContainsString('new CAdminFilter', $page);
+        self::assertStringNotContainsString('->Buttons(', $page);
+        self::assertStringNotContainsString('find_form', $page);
+        self::assertStringNotContainsString('find_product_id', $page);
+    }
+
     public function testPagePermissionAndReadOnlyBoundaries(): void
     {
         $page = file_get_contents(dirname(__DIR__, 2) . '/admin/monitoring.php');
