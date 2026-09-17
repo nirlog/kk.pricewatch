@@ -53,16 +53,24 @@ final class OrmMonitoringDashboardRepository implements MonitoringDashboardRepos
             if (isset($filters[$field])) $result['=' . $field] = $filters[$field];
         }
         $health = $forcedHealth ?? (string) ($filters['HEALTH'] ?? '');
-        $healthFilter = MonitoringHealth::ormFilter($health, self::toBitrixDateTime($cutoff));
+        $healthFilter = MonitoringHealth::ormFilter($health, $cutoff);
         if ($healthFilter !== []) $result[] = $healthFilter;
-        return $result;
+
+        return self::adaptFilterForBitrix($result);
     }
 
-    private static function toBitrixDateTime(DateTimeInterface $value): BitrixDateTime
+    private static function adaptFilterForBitrix(mixed $value): mixed
     {
-        $result = new BitrixDateTime();
-        $result->setTimestamp($value->getTimestamp());
+        if ($value instanceof DateTimeInterface) {
+            return BitrixDateTime::createFromTimestamp($value->getTimestamp());
+        }
 
-        return $result;
+        if (is_array($value)) {
+            foreach ($value as $key => $item) {
+                $value[$key] = self::adaptFilterForBitrix($item);
+            }
+        }
+
+        return $value;
     }
 }
