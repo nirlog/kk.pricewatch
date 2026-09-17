@@ -25,6 +25,16 @@ final class MonitoringDashboardSourceTest extends TestCase
         self::assertStringContainsString('catch (Throwable)', $page);
     }
 
+    public function testOrmDatesAreFormattedBeforeEscaping(): void
+    {
+        $page = file_get_contents(dirname(__DIR__, 2) . '/admin/monitoring.php');
+        self::assertStringContainsString('if ($value instanceof \\DateTimeInterface)', $page);
+        self::assertStringContainsString('return $safe($value->format(\'d.m.Y H:i:s\'));', $page);
+        self::assertStringContainsString('$dateTime($item[$field] ?? null)', $page);
+        self::assertStringNotContainsString("foreach (['LAST_CHECK_AT', 'LAST_SUCCESS_AT', 'ERROR_CODE']", $page);
+        self::assertStringContainsString('AddViewField(\'ERROR_CODE\', $safe($item[\'ERROR_CODE\'] ?? \'—\'))', $page);
+    }
+
     public function testRepositoryIsScopedPaginatedAndDoesNotReadHistory(): void
     {
         $source = file_get_contents(dirname(__DIR__, 2) . '/lib/Service/OrmMonitoringDashboardRepository.php');

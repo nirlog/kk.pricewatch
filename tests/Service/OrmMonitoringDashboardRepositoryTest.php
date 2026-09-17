@@ -23,12 +23,17 @@ final class OrmMonitoringDashboardRepositoryTest extends TestCase
     public function testBitrixDatesAreNormalizedForMonitoringHealth(): void
     {
         $cutoff = new DateTimeImmutable('2026-09-16 12:00:00 UTC');
+        $bitrixDateTime = 'Bitrix\\Main\\Type\\DateTime';
+        $lastCheck = new $bitrixDateTime(strtotime('2026-09-15 11:00:00 UTC'));
+        $lastSuccess = new $bitrixDateTime(strtotime('2026-09-15 12:00:00 UTC'));
+        self::assertInstanceOf($bitrixDateTime, $lastCheck);
+        self::assertInstanceOf($bitrixDateTime, $lastSuccess);
         $row = $this->normalize([
             'STATUS' => 'success',
             'CURRENT_PRICE' => '129990.00',
             'CURRENCY' => 'RUB',
-            'LAST_CHECK_AT' => new BitrixDateTimeStub(strtotime('2026-09-15 11:00:00 UTC')),
-            'LAST_SUCCESS_AT' => new BitrixDateTimeStub(strtotime('2026-09-15 12:00:00 UTC')),
+            'LAST_CHECK_AT' => $lastCheck,
+            'LAST_SUCCESS_AT' => $lastSuccess,
         ]);
 
         self::assertInstanceOf(DateTimeImmutable::class, $row['LAST_CHECK_AT']);
@@ -39,12 +44,13 @@ final class OrmMonitoringDashboardRepositoryTest extends TestCase
     public function testHealthyRowRemainsHealthyAndNullDatesRemainNull(): void
     {
         $cutoff = new DateTimeImmutable('2026-09-16 12:00:00 UTC');
+        $bitrixDateTime = 'Bitrix\\Main\\Type\\DateTime';
         $healthy = $this->normalize([
             'STATUS' => 'success',
             'CURRENT_PRICE' => '129990.00',
             'CURRENCY' => 'RUB',
             'LAST_CHECK_AT' => null,
-            'LAST_SUCCESS_AT' => new BitrixDateTimeStub(strtotime('2026-09-16 13:00:00 UTC')),
+            'LAST_SUCCESS_AT' => new $bitrixDateTime(strtotime('2026-09-16 13:00:00 UTC')),
         ]);
 
         self::assertFalse(MonitoringHealth::describe($healthy, $cutoff)['is_stale']);
