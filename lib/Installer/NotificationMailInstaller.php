@@ -18,11 +18,17 @@ final class NotificationMailInstaller
                 'NAME' => Loc::getMessage('KK_PRICEWATCH_MAIL_EVENT_NAME', null, $language) ?: 'KK PriceWatch notification digest',
                 'DESCRIPTION' => '#EMAIL_TO# - recipients\n#SCAN_AT# - scan time\n#PROBLEM_COUNT# - problems\n#RECOVERY_COUNT# - recoveries\n#DIGEST_HTML# - safe digest']);
         }
-        $existing = CEventMessage::GetList($by = 'id', $order = 'asc', ['TYPE_ID' => BitrixMailNotificationTransport::EVENT_NAME])->Fetch();
-        if (!$existing) (new CEventMessage())->Add(['ACTIVE' => 'Y', 'EVENT_NAME' => BitrixMailNotificationTransport::EVENT_NAME,
-            'LID' => array_keys($this->sites()), 'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#', 'EMAIL_TO' => '#EMAIL_TO#',
-            'SUBJECT' => 'KK PriceWatch: #PROBLEM_COUNT# problem(s), #RECOVERY_COUNT# recovery(s)',
-            'MESSAGE' => '<p>Scan: #SCAN_AT#</p>#DIGEST_HTML#', 'BODY_TYPE' => 'html']);
+        $existingSites = [];
+        $existing = CEventMessage::GetList($by = 'id', $order = 'asc', ['TYPE_ID' => BitrixMailNotificationTransport::EVENT_NAME]);
+        while ($row = $existing->Fetch()) foreach ((array) $row['LID'] as $siteId) $existingSites[(string) $siteId] = true;
+        foreach ($this->sites() as $siteId => $languageId) {
+            if (isset($existingSites[$siteId])) continue;
+            $messages = Loc::loadLanguageFile(__FILE__, $languageId);
+            (new CEventMessage())->Add(['ACTIVE' => 'Y', 'EVENT_NAME' => BitrixMailNotificationTransport::EVENT_NAME,
+                'LID' => [$siteId], 'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#', 'EMAIL_TO' => '#EMAIL_TO#',
+                'SUBJECT' => $messages['KK_PRICEWATCH_MAIL_SUBJECT'],
+                'MESSAGE' => $messages['KK_PRICEWATCH_MAIL_BODY'], 'BODY_TYPE' => 'html']);
+        }
     }
     public function uninstall(): void
     {
@@ -33,7 +39,10 @@ final class NotificationMailInstaller
     private function sites(): array
     {
         $sites = []; $query = \CSite::GetList($by = 'sort', $order = 'asc', ['ACTIVE' => 'Y']);
-        while ($row = $query->Fetch()) $sites[(string) $row['LID']] = true;
+        while ($row = $query->Fetch()) {
+            $sites[(string) $row['LID']] = in_array(($row['LANGUAGE_ID'] ?? ''), ['ru', 'en'], true)
+                ? (string) $row['LANGUAGE_ID'] : 'en';
+        }
         return $sites;
     }
 }

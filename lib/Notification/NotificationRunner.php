@@ -10,6 +10,7 @@ final class NotificationRunner
 {
     public const DEFAULT_BATCH_SIZE = 100;
     public const MAX_BATCH_SIZE = 1000;
+    public const MAX_PENDING_TRANSITIONS_PER_RUN = 1000;
 
     public function __construct(
         private readonly NotificationSettingsProviderInterface $settings,
@@ -32,10 +33,11 @@ final class NotificationRunner
         $now ??= new DateTimeImmutable();
         $scanned = 0;
         $all = [];
+        $pendingLimitReached = false;
         try {
             $maximum = $this->links->maximumActiveId();
             $lastId = 0;
-            while ($maximum !== null && $lastId < $maximum) {
+            while (!$pendingLimitReached && $maximum !== null && $lastId < $maximum) {
                 $rows = $this->links->findActiveAfter($lastId, $maximum, $batchSize);
                 if ($rows === []) break;
                 $ids = array_map(static fn(array $row): int => (int) $row['ID'], $rows);
@@ -44,7 +46,13 @@ final class NotificationRunner
                     $id = (int) $row['ID'];
                     foreach ($this->evaluator->evaluate($row, $now) as $rule => $current) {
                         $transition = $this->evaluator->transition($id, $rule, $current, $delivered[$id][$rule] ?? null, $row);
-                        if ($transition !== null) $all[] = $transition;
+                        if ($transition !== null) {
+                            $all[] = $transition;
+                            if (count($all) >= self::MAX_PENDING_TRANSITIONS_PER_RUN) {
+                                $pendingLimitReached = true;
+                                break 2;
+                            }
+                        }
                     }
                 }
                 $scanned += count($rows);

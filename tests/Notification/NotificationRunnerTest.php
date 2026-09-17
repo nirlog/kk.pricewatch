@@ -31,6 +31,37 @@ final class NotificationRunnerTest extends TestCase
         self::assertCount(1, $transport->digests);
     }
 
+    public function testPendingTransitionsAreBoundedAndRemainderIsPickedUpNextRun(): void
+    {
+        $rows = [];
+        for ($id = 1; $id <= 600; ++$id) {
+            $rows[] = ['ID' => $id, 'PRODUCT_ID' => $id, 'COMPETITOR_ID' => 2, 'COMPETITOR_NAME' => 'C',
+                'URL' => 'https://example.test/' . $id, 'STATUS' => 'error', 'ERROR_CODE' => 'E1',
+                'CURRENT_PRICE' => null, 'CURRENCY' => null, 'LAST_CHECK_AT' => new DateTimeImmutable(), 'LAST_SUCCESS_AT' => null];
+        }
+        $states = new StateMemory(); $transport = new TransportMemory(true);
+        $create = fn(): NotificationRunner => new NotificationRunner(
+            new SettingsMemory(new NotificationSettings(true, ['a@example.test'], 's1', true)), new LinksMemory($rows),
+            $states, new NotificationRuleEvaluator(), new ProductsMemory(), $transport, new LockMemory()
+        );
+        $first = $create()->run(100, new DateTimeImmutable('2026-09-17 12:00:00 UTC'));
+        self::assertSame(NotificationRunner::MAX_PENDING_TRANSITIONS_PER_RUN, $first->transitions);
+        self::assertCount(NotificationRunner::MAX_PENDING_TRANSITIONS_PER_RUN, $transport->digests[0]->transitions);
+        $second = $create()->run(100, new DateTimeImmutable('2026-09-17 12:01:00 UTC'));
+        self::assertSame(200, $second->transitions);
+        self::assertCount(200, $transport->digests[1]->transitions);
+    }
+
+    public function testMissingConfigurationIsFailureButDisabledIsSuccessfulNoOp(): void
+    {
+        $links = new LinksMemory([]); $states = new StateMemory(); $transport = new TransportMemory(true);
+        $missing = new NotificationRunner(new SettingsMemory(new NotificationSettings(true, [], '', true)), $links, $states, new NotificationRuleEvaluator(), new ProductsMemory(), $transport, new LockMemory());
+        self::assertTrue($missing->run()->configurationMissing);
+        self::assertFalse($missing->run()->isSuccessful());
+        $disabled = new NotificationRunner(new SettingsMemory(new NotificationSettings(false, [], '', true)), $links, $states, new NotificationRuleEvaluator(), new ProductsMemory(), $transport, new LockMemory());
+        self::assertTrue($disabled->run()->isSuccessful());
+    }
+
     private function runner(StateMemory $states, TransportMemory $transport, LockMemory $lock, bool $recovery): NotificationRunner
     {
         $row = ['ID' => 1, 'PRODUCT_ID' => 7, 'COMPETITOR_ID' => 2, 'COMPETITOR_NAME' => 'C', 'URL' => 'https://x.test/?a=1', 'STATUS' => 'error', 'ERROR_CODE' => 'E1', 'ERROR_MESSAGE' => 'secret', 'CURRENT_PRICE' => null, 'CURRENCY' => null, 'LAST_CHECK_AT' => new DateTimeImmutable(), 'LAST_SUCCESS_AT' => null];
@@ -39,7 +70,7 @@ final class NotificationRunnerTest extends TestCase
 }
 final class SettingsMemory implements NotificationSettingsProviderInterface { public function __construct(private NotificationSettings $v) {} public function get(): NotificationSettings{return $this->v;} }
 final class LinksMemory implements NotificationLinkRepositoryInterface { public function __construct(private array $rows) {} public function maximumActiveId(): ?int{return $this->rows ? max(array_column($this->rows,'ID')) : null;} public function findActiveAfter(int $lastId,int $maximumId,int $limit): array{return array_slice(array_values(array_filter($this->rows,fn($r)=>$r['ID']>$lastId&&$r['ID']<=$maximumId)),0,$limit);} }
-final class StateMemory implements NotificationStateRepositoryInterface { public array $delivered=[]; public array $saved=[]; public function findForLinks(array $ids): array{return $this->delivered;} public function saveDelivered(array $transitions,DateTimeInterface $at): void{$this->saved=array_merge($this->saved,$transitions);} }
+final class StateMemory implements NotificationStateRepositoryInterface { public array $delivered=[]; public array $saved=[]; public function findForLinks(array $ids): array{return array_intersect_key($this->delivered,array_flip($ids));} public function saveDelivered(array $transitions,DateTimeInterface $at): void{foreach($transitions as $transition){$this->saved[]=$transition;$this->delivered[$transition->linkId][$transition->ruleCode]=$transition->current;}} }
 final class TransportMemory implements NotificationTransportInterface { public array $digests=[]; public function __construct(private bool $success){} public function send(NotificationDigest $digest,array $recipients,string $siteId): bool{$this->digests[]=$digest;return $this->success;} }
 final class ProductsMemory implements ProductLabelResolverInterface { public function resolve(array $ids): array{return [7=>'Product'];} }
 final class LockMemory implements NotificationRunLockInterface { public bool $released=false; public function acquire(): bool{return true;} public function release(): void{$this->released=true;} }

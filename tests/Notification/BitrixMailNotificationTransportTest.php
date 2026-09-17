@@ -1,0 +1,39 @@
+<?php
+declare(strict_types=1);
+namespace KK\PriceWatch\Tests\Notification;
+
+use KK\PriceWatch\Notification\MailSendResult;
+use PHPUnit\Framework\TestCase;
+
+final class BitrixMailNotificationTransportTest extends TestCase
+{
+    public function testBitrixStringSendResultsAreHandledWithoutIntegerCoercion(): void
+    {
+        self::assertTrue(MailSendResult::isSuccess('Y', 'Y'));
+        self::assertFalse(MailSendResult::isSuccess('F', 'Y'));
+        self::assertFalse(MailSendResult::isSuccess('0', 'Y'));
+    }
+
+    public function testConfidentialDigestDisablesMainModuleDuplicateRecipient(): void
+    {
+        $source = (string) file_get_contents(dirname(__DIR__, 2) . '/lib/Notification/BitrixMailNotificationTransport.php');
+        self::assertStringContainsString("->send(self::EVENT_NAME, \$siteId, \$fields, 'N')", $source);
+        self::assertStringContainsString('Event::SEND_RESULT_SUCCESS', $source);
+        self::assertStringNotContainsString('(int)', $source);
+    }
+
+    public function testDigestLabelsAreLocalizedInBothLanguages(): void
+    {
+        $root = dirname(__DIR__, 2);
+        foreach (['en', 'ru'] as $language) {
+            $messages = (string) file_get_contents($root . '/lang/' . $language . '/lib/notification/bitrixmailnotificationtransport.php');
+            foreach (['DIGEST_PRODUCT', 'RULE_COLLECTION_ERROR', 'RULE_STALE', 'RULE_NO_SUCCESS_PRICE',
+                'TRANSITION_PROBLEM_STARTED', 'TRANSITION_PROBLEM_CHANGED', 'TRANSITION_RECOVERED'] as $key) {
+                self::assertStringContainsString('KK_PRICEWATCH_' . $key, $messages, $language . ':' . $key);
+            }
+            $template = (string) file_get_contents($root . '/lang/' . $language . '/lib/installer/notificationmailinstaller.php');
+            self::assertStringContainsString('KK_PRICEWATCH_MAIL_SUBJECT', $template);
+            self::assertStringContainsString('KK_PRICEWATCH_MAIL_BODY', $template);
+        }
+    }
+}

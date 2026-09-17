@@ -57,6 +57,6 @@ final class ManualPriceCheckAdminSourceTest extends TestCase
         $installer = self::source('install/index.php');
         self::assertStringContainsString('kk_pricewatch_product_price_check.php', $installer);
         self::assertFileExists(dirname(__DIR__, 2) . '/install/admin/kk_pricewatch_product_price_check.php');
-        self::assertStringContainsString("'VERSION' => '0.14.5'", self::source('install/version.php'));
+        self::assertStringContainsString("'VERSION' => '0.15.0'", self::source('install/version.php'));
     }
 }
