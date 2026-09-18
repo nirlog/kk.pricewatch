@@ -8,6 +8,8 @@ use KK\PriceWatch\Installer\AdminInstaller;
 use KK\PriceWatch\Installer\ComponentInstaller;
 use KK\PriceWatch\Installer\SchemaInstaller;
 use KK\PriceWatch\Installer\ScheduledAgentInstaller;
+use KK\PriceWatch\Installer\NotificationAgentInstaller;
+use KK\PriceWatch\Installer\NotificationMailInstaller;
 
 require_once dirname(__DIR__) . '/include.php';
 
@@ -46,6 +48,8 @@ class kk_pricewatch extends CModule
         (new ComponentInstaller())->install(__DIR__, $_SERVER['DOCUMENT_ROOT']);
         ModuleManager::registerModule($this->MODULE_ID);
         (new ScheduledAgentInstaller())->install();
+        (new NotificationAgentInstaller())->install();
+        (new NotificationMailInstaller())->install();
         $events = EventManager::getInstance();
         $events->unRegisterEventHandler('main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin');
         $events->registerEventHandler('main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin');
@@ -54,6 +58,8 @@ class kk_pricewatch extends CModule
     public function DoUninstall(): void
     {
         (new ScheduledAgentInstaller())->uninstall();
+        (new NotificationAgentInstaller())->uninstall();
+        (new NotificationMailInstaller())->uninstall();
         (new ComponentInstaller())->uninstall($_SERVER['DOCUMENT_ROOT']);
         EventManager::getInstance()->unRegisterEventHandler(
             'main', 'OnAdminTabControlBegin', $this->MODULE_ID, ProductEditTabHandler::class, 'onAdminTabControlBegin'
@@ -69,6 +75,7 @@ class kk_pricewatch extends CModule
             'kk_pricewatch_product_price_check.php',
             'kk_pricewatch_price_history.php',
             'kk_pricewatch_monitoring.php',
+            'kk_pricewatch_notification_settings.php',
         ] as $proxyFile) {
             $proxyPath = $adminDirectory . '/' . $proxyFile;
             clearstatcache(true, $proxyPath);

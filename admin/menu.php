@@ -19,15 +19,20 @@ return [
     'icon' => 'default_menu_icon',
     'page_icon' => 'default_page_icon',
     'items_id' => 'menu_kk_pricewatch',
-    'items' => [[
+    'items' => array_values(array_filter([[
         'text' => Loc::getMessage('KK_PRICEWATCH_MENU_MONITORING'),
         'title' => Loc::getMessage('KK_PRICEWATCH_MENU_MONITORING_TITLE'),
         'url' => 'kk_pricewatch_monitoring.php?lang=' . LANGUAGE_ID,
         'more_url' => [],
-    ], [
+    ], Access::canWrite() ? [
+        'text' => Loc::getMessage('KK_PRICEWATCH_MENU_NOTIFICATIONS'),
+        'title' => Loc::getMessage('KK_PRICEWATCH_MENU_NOTIFICATIONS_TITLE'),
+        'url' => 'kk_pricewatch_notification_settings.php?lang=' . LANGUAGE_ID,
+        'more_url' => [],
+    ] : null, [
         'text' => Loc::getMessage('KK_PRICEWATCH_MENU_COMPETITORS'),
         'title' => Loc::getMessage('KK_PRICEWATCH_MENU_COMPETITORS_TITLE'),
         'url' => 'kk_pricewatch_competitors.php?lang=' . LANGUAGE_ID,
         'more_url' => ['kk_pricewatch_competitor_edit.php'],
-    ]],
+    ]])),
 ];
