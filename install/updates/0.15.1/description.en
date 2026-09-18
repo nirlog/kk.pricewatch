@@ -1,0 +1,1 @@
+Fixes notification mail localization on case-sensitive filesystems and repairs empty notification templates.
