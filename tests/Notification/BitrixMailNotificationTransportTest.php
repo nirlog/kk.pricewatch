@@ -10,6 +10,7 @@ final class BitrixMailNotificationTransportTest extends TestCase
     public function testBitrixStringSendResultsAreHandledWithoutIntegerCoercion(): void
     {
         self::assertTrue(MailSendResult::isSuccess('Y', 'Y'));
+        self::assertTrue(MailSendResult::isSuccess('BITRIX_SUCCESS', 'BITRIX_SUCCESS'));
         self::assertFalse(MailSendResult::isSuccess('F', 'Y'));
         self::assertFalse(MailSendResult::isSuccess('0', 'Y'));
     }
@@ -19,7 +20,8 @@ final class BitrixMailNotificationTransportTest extends TestCase
         $source = (string) file_get_contents(dirname(__DIR__, 2) . '/lib/Notification/BitrixMailNotificationTransport.php');
         self::assertStringContainsString("->send(self::EVENT_NAME, \$siteId, \$fields, 'N')", $source);
         self::assertStringContainsString('Event::SEND_RESULT_SUCCESS', $source);
-        self::assertStringNotContainsString('(int)', $source);
+        self::assertStringNotContainsString('(int) $result', $source);
+        self::assertDoesNotMatchRegularExpression('/\(int\)\s*\$this->sender->send\s*\(/', $source);
     }
 
     public function testDigestLabelsAreLocalizedInBothLanguages(): void

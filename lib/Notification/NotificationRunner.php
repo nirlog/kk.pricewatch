@@ -44,7 +44,9 @@ final class NotificationRunner
                 $delivered = $this->states->findForLinks($ids);
                 foreach ($rows as $row) {
                     $id = (int) $row['ID'];
-                    foreach ($this->evaluator->evaluate($row, $now) as $rule => $current) {
+                    $currentStates = $this->evaluator->evaluate($row, $now);
+                    ++$scanned;
+                    foreach ($currentStates as $rule => $current) {
                         $transition = $this->evaluator->transition($id, $rule, $current, $delivered[$id][$rule] ?? null, $row);
                         if ($transition !== null) {
                             $all[] = $transition;
@@ -55,7 +57,6 @@ final class NotificationRunner
                         }
                     }
                 }
-                $scanned += count($rows);
                 $lastId = (int) $rows[array_key_last($rows)]['ID'];
             }
 

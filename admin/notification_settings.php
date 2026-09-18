@@ -5,6 +5,8 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SiteTable;
 use KK\PriceWatch\Admin\Access;
 use KK\PriceWatch\Notification\NotificationSettings;
+use KK\PriceWatch\Notification\NotificationSettingsValidator;
+use KK\PriceWatch\Notification\BitrixNotificationMailTemplateChecker;
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
 if (!Loader::includeModule('kk.pricewatch') || !Access::canWrite()) $APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
@@ -12,6 +14,8 @@ Loc::loadMessages(__FILE__);
 $moduleId = 'kk.pricewatch'; $errors = [];
 $sites = []; $siteQuery = SiteTable::getList(['select' => ['LID', 'NAME'], 'filter' => ['=ACTIVE' => 'Y'], 'order' => ['SORT' => 'ASC']]);
 while ($site = $siteQuery->fetch()) $sites[(string) $site['LID']] = (string) $site['NAME'];
+$values = ['enabled' => Option::get($moduleId, 'notifications_enabled', 'N'), 'emails' => Option::get($moduleId, 'notification_emails', ''),
+    'site' => Option::get($moduleId, 'notification_site_id', ''), 'recovery' => Option::get($moduleId, 'send_recovery', 'Y')];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save']) && check_bitrix_sessid()) {
     $enabled = isset($_POST['notifications_enabled']) ? 'Y' : 'N';
     $recovery = isset($_POST['send_recovery']) ? 'Y' : 'N';
@@ -21,19 +25,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save']) && check_bitr
         $errors[] = Loc::getMessage('KK_PRICEWATCH_NOTIFY_INVALID_EMAIL');
     }
     $siteId = trim((string) ($_POST['notification_site_id'] ?? ''));
-    if ($siteId !== '' && !isset($sites[$siteId])) $errors[] = Loc::getMessage('KK_PRICEWATCH_NOTIFY_INVALID_SITE');
+    $values = ['enabled' => $enabled, 'emails' => $rawEmails, 'site' => $siteId, 'recovery' => $recovery];
+    $templateExists = $siteId !== '' && isset($sites[$siteId])
+        && (new BitrixNotificationMailTemplateChecker())->existsForSite($siteId);
+    $validationMessages = [
+        NotificationSettingsValidator::RECIPIENTS_REQUIRED => 'KK_PRICEWATCH_NOTIFY_RECIPIENTS_REQUIRED',
+        NotificationSettingsValidator::SITE_REQUIRED => 'KK_PRICEWATCH_NOTIFY_SITE_REQUIRED',
+        NotificationSettingsValidator::SITE_INACTIVE => 'KK_PRICEWATCH_NOTIFY_INVALID_SITE',
+        NotificationSettingsValidator::TEMPLATE_MISSING => 'KK_PRICEWATCH_NOTIFY_TEMPLATE_MISSING',
+    ];
+    foreach ((new NotificationSettingsValidator())->validate($enabled === 'Y', $emails, $siteId, isset($sites[$siteId]), $templateExists) as $code) {
+        $errors[] = Loc::getMessage($validationMessages[$code]);
+    }
     if ($errors === []) {
         Option::set($moduleId, 'notifications_enabled', $enabled); Option::set($moduleId, 'notification_emails', implode(', ', $emails));
         Option::set($moduleId, 'notification_site_id', $siteId); Option::set($moduleId, 'send_recovery', $recovery);
         LocalRedirect('kk_pricewatch_notification_settings.php?lang=' . LANGUAGE_ID . '&saved=Y');
     }
 }
-$values = ['enabled' => Option::get($moduleId, 'notifications_enabled', 'N'), 'emails' => Option::get($moduleId, 'notification_emails', ''),
-    'site' => Option::get($moduleId, 'notification_site_id', ''), 'recovery' => Option::get($moduleId, 'send_recovery', 'Y')];
 $APPLICATION->SetTitle(Loc::getMessage('KK_PRICEWATCH_NOTIFY_TITLE'));
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
 if (($_GET['saved'] ?? '') === 'Y') CAdminMessage::ShowMessage(['TYPE' => 'OK', 'MESSAGE' => Loc::getMessage('KK_PRICEWATCH_NOTIFY_SAVED')]);
 foreach ($errors as $error) CAdminMessage::ShowMessage($error);
+?><div class="adm-info-message"><?= htmlspecialcharsbx(Loc::getMessage('KK_PRICEWATCH_NOTIFY_EXECUTION_NOTE')) ?></div><?php
 ?><form method="post" action="<?= htmlspecialcharsbx($APPLICATION->GetCurPage()) ?>">
 <?= bitrix_sessid_post() ?>
 <table class="adm-detail-content-table edit-table"><tbody>

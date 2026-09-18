@@ -15,6 +15,7 @@ final class NotificationRunnerTest extends TestCase
         $runner = $this->runner($states, $transport, $lock, true);
         $result = $runner->run(1, new DateTimeImmutable('2026-09-17 12:00:00 UTC'));
         self::assertTrue($result->failed); self::assertCount(1, $transport->digests); self::assertCount(0, $states->saved);
+        self::assertSame(1, $result->scanned);
         self::assertGreaterThan(1, count($transport->digests[0]->transitions)); self::assertTrue($lock->released);
     }
 
@@ -46,9 +47,11 @@ final class NotificationRunnerTest extends TestCase
         );
         $first = $create()->run(100, new DateTimeImmutable('2026-09-17 12:00:00 UTC'));
         self::assertSame(NotificationRunner::MAX_PENDING_TRANSITIONS_PER_RUN, $first->transitions);
+        self::assertSame(500, $first->scanned);
         self::assertCount(NotificationRunner::MAX_PENDING_TRANSITIONS_PER_RUN, $transport->digests[0]->transitions);
         $second = $create()->run(100, new DateTimeImmutable('2026-09-17 12:01:00 UTC'));
         self::assertSame(200, $second->transitions);
+        self::assertSame(600, $second->scanned);
         self::assertCount(200, $transport->digests[1]->transitions);
     }
 
@@ -60,6 +63,18 @@ final class NotificationRunnerTest extends TestCase
         self::assertFalse($missing->run()->isSuccessful());
         $disabled = new NotificationRunner(new SettingsMemory(new NotificationSettings(false, [], '', true)), $links, $states, new NotificationRuleEvaluator(), new ProductsMemory(), $transport, new LockMemory());
         self::assertTrue($disabled->run()->isSuccessful());
+    }
+
+    public function testEmptyRepositoryReportsNoScannedLinks(): void
+    {
+        $runner = new NotificationRunner(
+            new SettingsMemory(new NotificationSettings(true, ['a@example.test'], 's1', true)),
+            new LinksMemory([]), new StateMemory(), new NotificationRuleEvaluator(), new ProductsMemory(),
+            new TransportMemory(true), new LockMemory()
+        );
+        $result = $runner->run();
+        self::assertSame(0, $result->scanned);
+        self::assertSame(0, $result->transitions);
     }
 
     private function runner(StateMemory $states, TransportMemory $transport, LockMemory $lock, bool $recovery): NotificationRunner
