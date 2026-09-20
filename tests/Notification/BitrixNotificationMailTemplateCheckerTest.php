@@ -21,7 +21,7 @@ namespace {
         public static array $rows = [];
 
         /** @param array<string, mixed> $filter */
-        public static function GetList(mixed &$by, mixed &$order, array $filter): BitrixNotificationMailTemplateQueryStub
+        public static function GetList(mixed $by, mixed $order, array $filter): BitrixNotificationMailTemplateQueryStub
         {
             return new BitrixNotificationMailTemplateQueryStub(self::$rows);
         }
