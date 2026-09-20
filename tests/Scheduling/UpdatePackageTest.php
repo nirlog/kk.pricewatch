@@ -14,11 +14,11 @@ final class UpdatePackageTest extends TestCase
         $root = dirname(__DIR__, 2);
         $directory = sys_get_temp_dir() . '/kk-pricewatch-' . bin2hex(random_bytes(8));
         self::assertTrue(mkdir($directory));
-        $archivePath = $directory . '/0.15.0.tar.gz';
+        $archivePath = $directory . '/0.15.1.tar.gz';
 
         exec(
             escapeshellarg(PHP_BINARY) . ' '
-            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.15.0 '
+            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.15.1 '
             . escapeshellarg($archivePath),
             $output,
             $exitCode
@@ -40,9 +40,26 @@ final class UpdatePackageTest extends TestCase
             self::assertTrue(isset($archive['lib/Service/MonitoringDashboardService.php']));
             self::assertTrue(isset($archive['install/components/kk.pricewatch/product.prices/class.php']));
 
+            foreach ([
+                'lang/ru/lib/Installer/NotificationMailInstaller.php',
+                'lang/en/lib/Installer/NotificationMailInstaller.php',
+                'lang/ru/lib/Notification/BitrixMailNotificationTransport.php',
+                'lang/en/lib/Notification/BitrixMailNotificationTransport.php',
+            ] as $localizedFile) {
+                self::assertTrue(isset($archive[$localizedFile]), $localizedFile);
+            }
+            foreach ([
+                'lang/ru/lib/installer/notificationmailinstaller.php',
+                'lang/en/lib/installer/notificationmailinstaller.php',
+                'lang/ru/lib/notification/bitrixmailnotificationtransport.php',
+                'lang/en/lib/notification/bitrixmailnotificationtransport.php',
+            ] as $obsoleteLocalizedFile) {
+                self::assertFalse(isset($archive[$obsoleteLocalizedFile]), $obsoleteLocalizedFile);
+            }
+
             foreach (new \RecursiveIteratorIterator($archive) as $file) {
                 self::assertStringNotContainsString(
-                    '/install/updates/0.15.0/',
+                    '/install/updates/0.15.1/',
                     str_replace('\\', '/', $file->getPathname())
                 );
             }
