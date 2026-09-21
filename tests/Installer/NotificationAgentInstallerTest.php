@@ -10,6 +10,14 @@ namespace {
         }
     }
 
+    if (!class_exists('CTimeZone')) {
+        final class CTimeZone
+        {
+            public static int $offset = 0;
+            public static function GetOffset(): int { return self::$offset; }
+        }
+    }
+
     final class NotificationAgentResultStub
     {
         public function __construct(private array $rows) {}
@@ -60,7 +68,13 @@ namespace KK\PriceWatch\Tests\Installer {
 
     final class NotificationAgentInstallerTest extends TestCase
     {
-        protected function setUp(): void { CAgent::$rows = []; CAgent::$nextId = 1; CAgent::$updates = []; }
+        protected function setUp(): void
+        {
+            CAgent::$rows = [];
+            CAgent::$nextId = 1;
+            CAgent::$updates = [];
+            \CTimeZone::$offset = 0;
+        }
 
         public function testFreshAndRepeatedInstallCreateOneInactiveHourlyAgent(): void
         {
@@ -134,6 +148,15 @@ namespace KK\PriceWatch\Tests\Installer {
             $installer->configure(true, 3600);
             self::assertSame('Y', CAgent::$rows[1]['ACTIVE']);
             self::assertSame(date('d.m.Y H:i:s', 1_700_003_600), CAgent::$rows[1]['NEXT_EXEC']);
+        }
+
+        public function testNextExecutionIncludesBitrixTimezoneOffset(): void
+        {
+            $this->add('N', 3600);
+            \CTimeZone::$offset = 10_800;
+            $installer = new NotificationAgentInstaller(static fn(): int => 1_700_000_000);
+            $installer->configure(true, 3600);
+            self::assertSame(date('d.m.Y H:i:s', 1_700_014_400), CAgent::$rows[1]['NEXT_EXEC']);
         }
 
         public function testUnchangedConfigurationDoesNotUpdateOrShiftSchedule(): void

@@ -96,7 +96,10 @@ final class NotificationAgentInstaller
         if ($intervalChanged || (!$wasActive && $active)) {
             // A changed schedule starts a full configured interval from now.
             // ConvertTimeStamp(..., 'FULL') is the legacy Bitrix CAgent date format.
-            $fields['NEXT_EXEC'] = ConvertTimeStamp(($this->clock)() + $intervalSeconds, 'FULL');
+            $fields['NEXT_EXEC'] = ConvertTimeStamp(
+                ($this->clock)() + \CTimeZone::GetOffset() + $intervalSeconds,
+                'FULL'
+            );
         }
         if (!CAgent::Update((int) $record['ID'], $fields)) {
             throw new RuntimeException('Unable to configure notification agent.');
