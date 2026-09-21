@@ -6,6 +6,7 @@ namespace KK\PriceWatch\Collector\External;
 
 use JsonException;
 use KK\PriceWatch\Collector\CollectorInterface;
+use KK\PriceWatch\Collector\CollectorItemResult;
 use KK\PriceWatch\Collector\CollectorRequest;
 use KK\PriceWatch\Collector\CollectorResponse;
 use Throwable;
@@ -24,7 +25,9 @@ final readonly class ExternalCollector implements CollectorInterface
     public function collect(CollectorRequest $request): CollectorResponse
     {
         try {
-            $body = json_encode($request->toArray(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $payload = $request->toArray();
+            $payload['options'] = (object) $payload['options'];
+            $body = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             $result = $this->transport->post($this->endpoint, $body, [
                 'Content-Type' => 'application/json', 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . $this->token,
@@ -40,10 +43,35 @@ final readonly class ExternalCollector implements CollectorInterface
         if ($result->status < 200 || $result->status >= 300) return $this->failure($request, 'COLLECTOR_ERROR', 'External collector request failed.');
         if (!$this->isJson($result->contentType) || strlen($result->body) > BitrixExternalCollectorTransport::BODY_LIMIT) return $this->invalid($request);
         try {
-            return $this->decoder->decode($result->body);
+            return $this->sanitizeRemoteErrors($this->decoder->decode($result->body));
         } catch (Throwable) {
             return $this->invalid($request);
         }
+    }
+
+    private function sanitizeRemoteErrors(CollectorResponse $response): CollectorResponse
+    {
+        if ($this->token === '') {
+            return $response;
+        }
+        if (!$response->success) {
+            return CollectorResponse::failure(
+                $response->requestId,
+                $response->error->code,
+                str_replace($this->token, '[REDACTED]', $response->error->message),
+            );
+        }
+
+        return CollectorResponse::success($response->requestId, array_map(
+            fn (CollectorItemResult $item): CollectorItemResult => $item->success
+                ? $item
+                : CollectorItemResult::failure(
+                    $item->id,
+                    $item->error->code,
+                    str_replace($this->token, '[REDACTED]', $item->error->message),
+                ),
+            $response->items,
+        ));
     }
 
     /** @return array{endpoint: string, tokenConfigured: bool, connectTimeout: int, requestTimeout: int, transport: class-string, decoder: class-string} */

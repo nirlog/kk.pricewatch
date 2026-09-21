@@ -118,7 +118,8 @@ The module sends `POST` with `Content-Type` and `Accept: application/json` and a
 `Authorization: Bearer` header. Redirects are disabled and responses are limited
 to 2 MiB. The body is exactly collector contract 1.0 (`schema_version`,
 `request_id`, `items`, and opaque `options`); handler, ORM IDs, and secrets are
-never added. Full item URLs and query parameters are preserved.
+never added. Empty options are serialized as the JSON object `{}`, never as a
+list. Full item URLs and query parameters are preserved.
 
 The service must return a JSON media type and a strict contract 1.0 response.
 Unknown fields are permitted, but required field types, identities, unique item
@@ -129,6 +130,8 @@ successful items. Non-2xx responses are transport failures. Timeout maps to
 `COLLECTOR_TIMEOUT`; network/DNS/connect/TLS and non-2xx failures map to
 `COLLECTOR_ERROR`; oversized, non-JSON, malformed JSON, or invalid-contract
 responses map to `INVALID_RESPONSE`.
+Before a valid remote error is returned to orchestration, any exact occurrence
+of the configured bearer token in its message is replaced with `[REDACTED]`.
 
 The token is stored only as a module option and sent only in the Authorization
 header. Its saved value is never rendered (even partially); a blank password

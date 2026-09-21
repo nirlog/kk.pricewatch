@@ -28,7 +28,56 @@ final class ExternalCollectorTest extends TestCase
         $response=$collector->collect(new CollectorRequest('1.0','r',[new CollectorItem('12','https://shop.test/p?a=1')],['region'=>'СПб']));
         self::assertTrue($response->success); self::assertSame('Bearer top-secret',$fake->call[2]['Authorization']); self::assertSame((new CollectorRequest('1.0','r',[new CollectorItem('12','https://shop.test/p?a=1')],['region'=>'СПб']))->toArray(),json_decode($fake->call[1],true)); self::assertStringNotContainsString('top-secret',$fake->call[1]);
     }
+    public function testEmptyOptionsAreEncodedAsJsonObject(): void
+    {
+        $fake = new class implements ExternalCollectorTransportInterface {
+            public string $body = '';
+            public function post(string $endpoint, string $body, array $headers, int $connectTimeout, int $requestTimeout): ExternalCollectorHttpResult
+            {
+                $this->body = $body;
+                return ExternalCollectorHttpResult::response(200, 'application/json', '{"schema_version":"1.0","request_id":"r","success":true,"items":[]}');
+            }
+        };
+        $collector = new ExternalCollector('https://collector.test/x', 'top-secret', 5, 60, $fake, new ExternalCollectorResponseDecoder());
+        $collector->collect(new CollectorRequest('1.0', 'r', [new CollectorItem('1', 'https://shop.test/p')]));
+        $payload = json_decode($fake->body, false, 512, JSON_THROW_ON_ERROR);
+        self::assertInstanceOf(\stdClass::class, $payload->options);
+        self::assertSame([], get_object_vars($payload->options));
+        self::assertStringContainsString('"options":{}', $fake->body);
+    }
+    public function testRemoteGlobalErrorMessageRedactsToken(): void
+    {
+        $response = $this->collectorReturning('{"schema_version":"1.0","request_id":"r","success":false,"items":[],"error":{"code":"COLLECTOR_ERROR","message":"Token top-secret was rejected"}}')
+            ->collect(new CollectorRequest('1.0', 'r', [new CollectorItem('1', 'https://shop.test/p')]));
+        self::assertSame('COLLECTOR_ERROR', $response->error?->code);
+        self::assertSame('Token [REDACTED] was rejected', $response->error?->message);
+    }
+    public function testRemoteItemErrorMessageRedactsToken(): void
+    {
+        $response = $this->collectorReturning('{"schema_version":"1.0","request_id":"r","success":true,"items":[{"id":"1","success":false,"error":{"code":"PRICE_NOT_FOUND","message":"top-secret could not collect"}}]}')
+            ->collect(new CollectorRequest('1.0', 'r', [new CollectorItem('1', 'https://shop.test/p')]));
+        self::assertSame('PRICE_NOT_FOUND', $response->items[0]->error?->code);
+        self::assertSame('[REDACTED] could not collect', $response->items[0]->error?->message);
+    }
+    public function testRemoteErrorWithoutTokenIsUnchanged(): void
+    {
+        $response = $this->collectorReturning('{"schema_version":"1.0","request_id":"r","success":false,"items":[],"error":{"code":"COLLECTOR_ERROR","message":"Ordinary remote failure"}}')
+            ->collect(new CollectorRequest('1.0', 'r', [new CollectorItem('1', 'https://shop.test/p')]));
+        self::assertSame('Ordinary remote failure', $response->error?->message);
+    }
     #[DataProvider('failures')]
     public function testFailureMapping(ExternalCollectorHttpResult $result,string $code): void { $fake=new class($result) implements ExternalCollectorTransportInterface { public function __construct(private ExternalCollectorHttpResult $r){} public function post(string $e,string $b,array $h,int $c,int $r): ExternalCollectorHttpResult{return $this->r;} }; $response=(new ExternalCollector('https://x.test/x','secret',5,60,$fake,new ExternalCollectorResponseDecoder()))->collect(new CollectorRequest('1.0','r',[new CollectorItem('1','https://p.test')])); self::assertSame($code,$response->error?->code); self::assertStringNotContainsString('secret',$response->error?->message??''); }
     public static function failures(): array { return [[ExternalCollectorHttpResult::failure('timeout'),'COLLECTOR_TIMEOUT'],[ExternalCollectorHttpResult::failure('network'),'COLLECTOR_ERROR'],[ExternalCollectorHttpResult::failure('oversized'),'INVALID_RESPONSE'],[ExternalCollectorHttpResult::response(500,'application/json','secret'),'COLLECTOR_ERROR'],[ExternalCollectorHttpResult::response(200,'text/html','{}'),'INVALID_RESPONSE'],[ExternalCollectorHttpResult::response(200,'application/json','{bad'),'INVALID_RESPONSE']]; }
+
+    private function collectorReturning(string $body): ExternalCollector
+    {
+        $transport = new class($body) implements ExternalCollectorTransportInterface {
+            public function __construct(private readonly string $body) {}
+            public function post(string $endpoint, string $body, array $headers, int $connectTimeout, int $requestTimeout): ExternalCollectorHttpResult
+            {
+                return ExternalCollectorHttpResult::response(200, 'application/json', $this->body);
+            }
+        };
+        return new ExternalCollector('https://collector.test/x', 'top-secret', 5, 60, $transport, new ExternalCollectorResponseDecoder());
+    }
 }
