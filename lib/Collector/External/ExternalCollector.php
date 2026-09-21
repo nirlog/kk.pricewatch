@@ -46,6 +46,19 @@ final readonly class ExternalCollector implements CollectorInterface
         }
     }
 
+    /** @return array{endpoint: string, tokenConfigured: bool, connectTimeout: int, requestTimeout: int, transport: class-string, decoder: class-string} */
+    public function __debugInfo(): array
+    {
+        return [
+            'endpoint' => $this->endpoint,
+            'tokenConfigured' => $this->token !== '',
+            'connectTimeout' => $this->connectTimeout,
+            'requestTimeout' => $this->requestTimeout,
+            'transport' => $this->transport::class,
+            'decoder' => $this->decoder::class,
+        ];
+    }
+
     private function isJson(?string $contentType): bool
     {
         if (!is_string($contentType)) return false;

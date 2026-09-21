@@ -9,7 +9,13 @@ final class BitrixExternalCollectorTransport implements ExternalCollectorTranspo
     public function post(string $endpoint, string $body, array $headers, int $connectTimeout, int $requestTimeout): ExternalCollectorHttpResult
     {
         try {
-            $client = new HttpClient(['socketTimeout' => $connectTimeout, 'streamTimeout' => $requestTimeout, 'redirect' => false, 'redirectMax' => 0]);
+            $client = new HttpClient([
+                'socketTimeout' => $connectTimeout,
+                'streamTimeout' => $requestTimeout,
+                'redirect' => false,
+                'redirectMax' => 0,
+                'sendEvents' => false,
+            ]);
             $host = strtolower((string) parse_url($endpoint, PHP_URL_HOST));
             $client->setPrivateIp(in_array($host, ['localhost', '127.0.0.1', '::1', '[::1]'], true));
             $client->setBodyLengthMax(self::BODY_LIMIT);

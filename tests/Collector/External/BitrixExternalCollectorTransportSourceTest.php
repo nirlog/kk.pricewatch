@@ -12,6 +12,7 @@ final class BitrixExternalCollectorTransportSourceTest extends TestCase
         self::assertStringContainsString('setBodyLengthMax(self::BODY_LIMIT)', $source);
         self::assertStringContainsString("'socketTimeout' => \$connectTimeout", $source);
         self::assertStringContainsString("'streamTimeout' => \$requestTimeout", $source);
+        self::assertStringContainsString("'sendEvents' => false", $source);
         self::assertStringNotContainsString('Authorization', $source);
     }
 }

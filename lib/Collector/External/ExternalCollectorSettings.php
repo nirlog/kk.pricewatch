@@ -37,6 +37,18 @@ final readonly class ExternalCollectorSettings
         return $this->token;
     }
 
+    /** @return array{enabled: bool, baseUrl: string, tokenConfigured: bool, connectTimeout: int, requestTimeout: int} */
+    public function __debugInfo(): array
+    {
+        return [
+            'enabled' => $this->enabled,
+            'baseUrl' => $this->baseUrl,
+            'tokenConfigured' => $this->token !== '',
+            'connectTimeout' => $this->connectTimeout,
+            'requestTimeout' => $this->requestTimeout,
+        ];
+    }
+
     /** @return array{enabled: bool, base_url: string, connect_timeout: int, request_timeout: int, token_configured: bool} */
     public function renderableState(): array
     {
