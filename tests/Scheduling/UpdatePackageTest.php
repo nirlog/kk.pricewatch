@@ -14,11 +14,11 @@ final class UpdatePackageTest extends TestCase
         $root = dirname(__DIR__, 2);
         $directory = sys_get_temp_dir() . '/kk-pricewatch-' . bin2hex(random_bytes(8));
         self::assertTrue(mkdir($directory));
-        $archivePath = $directory . '/0.15.1.tar.gz';
+        $archivePath = $directory . '/0.16.0.tar.gz';
 
         exec(
             escapeshellarg(PHP_BINARY) . ' '
-            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.15.1 '
+            . escapeshellarg($root . '/bin/build-update-package.php') . ' 0.16.0 '
             . escapeshellarg($archivePath),
             $output,
             $exitCode
@@ -36,6 +36,12 @@ final class UpdatePackageTest extends TestCase
             self::assertTrue(isset($archive['install/admin/kk_pricewatch_notification_settings.php']));
             self::assertTrue(isset($archive['bin/pricewatch-notify.php']));
             self::assertTrue(isset($archive['lib/Notification/NotificationRunner.php']));
+            self::assertTrue(isset($archive['lib/Installer/NotificationAgentInstaller.php']));
+            self::assertTrue(isset($archive['lib/Installer/NotificationAgentState.php']));
+            self::assertTrue(isset($archive['lib/Notification/NotificationAgentIntervalValidator.php']));
+            self::assertTrue(isset($archive['admin/notification_settings.php']));
+            self::assertTrue(isset($archive['lang/ru/admin/notification_settings.php']));
+            self::assertTrue(isset($archive['lang/en/admin/notification_settings.php']));
             self::assertTrue(isset($archive['admin/monitoring.php']));
             self::assertTrue(isset($archive['lib/Service/MonitoringDashboardService.php']));
             self::assertTrue(isset($archive['install/components/kk.pricewatch/product.prices/class.php']));
@@ -59,7 +65,7 @@ final class UpdatePackageTest extends TestCase
 
             foreach (new \RecursiveIteratorIterator($archive) as $file) {
                 self::assertStringNotContainsString(
-                    '/install/updates/0.15.1/',
+                    '/install/updates/0.16.0/',
                     str_replace('\\', '/', $file->getPathname())
                 );
             }
@@ -67,6 +73,17 @@ final class UpdatePackageTest extends TestCase
             @unlink($archivePath);
             @rmdir($directory);
         }
+    }
+
+    public function testNotificationAgentUpdaterOnlyRepairsAgentRegistration(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $updater = (string) file_get_contents($root . '/install/updates/0.16.0/updater.php');
+        self::assertStringContainsString('NotificationAgentInstaller', $updater);
+        self::assertStringNotContainsString('NotificationRunner', $updater);
+        self::assertStringNotContainsString('Collector', $updater);
+        self::assertStringNotContainsString('Mail', $updater);
+        self::assertStringNotContainsString('Table::', $updater);
     }
 
     public function testRequestedVersionMustMatchModuleVersion(): void
