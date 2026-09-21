@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace KK\PriceWatch\Installer;
 
 use CAgent;
+use Closure;
 use KK\PriceWatch\Agent\NotificationAgent;
 use RuntimeException;
 
@@ -14,6 +15,13 @@ final class NotificationAgentInstaller
     public const DEFAULT_INTERVAL_SECONDS = 3600;
     public const MIN_INTERVAL_SECONDS = 300;
     public const MAX_INTERVAL_SECONDS = 86400;
+
+    private Closure $clock;
+
+    public function __construct(?callable $clock = null)
+    {
+        $this->clock = $clock !== null ? Closure::fromCallable($clock) : static fn(): int => time();
+    }
 
     public function install(): void
     {
@@ -33,7 +41,7 @@ final class NotificationAgentInstaller
             return;
         }
 
-        $primary = array_shift($records);
+        $primary = $this->selectPrimary($records);
         $interval = (int) ($primary['AGENT_INTERVAL'] ?? 0);
         if (!$this->isValidIntervalSeconds($interval)
             && !CAgent::Update((int) $primary['ID'], ['AGENT_INTERVAL' => self::DEFAULT_INTERVAL_SECONDS])) {
@@ -41,6 +49,9 @@ final class NotificationAgentInstaller
         }
 
         foreach ($records as $duplicate) {
+            if ((int) $duplicate['ID'] === (int) $primary['ID']) {
+                continue;
+            }
             if (!CAgent::Delete((int) $duplicate['ID'])) {
                 throw new RuntimeException('Unable to remove duplicate notification agent.');
             }
@@ -66,10 +77,28 @@ final class NotificationAgentInstaller
 
         $this->install();
         $record = $this->findAll()[0] ?? null;
-        if ($record === null || !CAgent::Update((int) $record['ID'], [
+        if ($record === null) {
+            throw new RuntimeException('Unable to configure notification agent.');
+        }
+
+        $wasActive = ($record['ACTIVE'] ?? 'N') === 'Y';
+        $previousInterval = (int) ($record['AGENT_INTERVAL'] ?? 0);
+        $activeChanged = $wasActive !== $active;
+        $intervalChanged = $previousInterval !== $intervalSeconds;
+        if (!$activeChanged && !$intervalChanged) {
+            return;
+        }
+
+        $fields = [
             'ACTIVE' => $active ? 'Y' : 'N',
             'AGENT_INTERVAL' => $intervalSeconds,
-        ])) {
+        ];
+        if ($intervalChanged || (!$wasActive && $active)) {
+            // A changed schedule starts a full configured interval from now.
+            // ConvertTimeStamp(..., 'FULL') is the legacy Bitrix CAgent date format.
+            $fields['NEXT_EXEC'] = ConvertTimeStamp(($this->clock)() + $intervalSeconds, 'FULL');
+        }
+        if (!CAgent::Update((int) $record['ID'], $fields)) {
             throw new RuntimeException('Unable to configure notification agent.');
         }
 
@@ -97,8 +126,20 @@ final class NotificationAgentInstaller
         return $records;
     }
 
+    private function selectPrimary(array $records): array
+    {
+        foreach ($records as $record) {
+            if (($record['ACTIVE'] ?? 'N') === 'Y') {
+                return $record;
+            }
+        }
+        return $records[0];
+    }
+
     private function isValidIntervalSeconds(int $interval): bool
     {
-        return $interval >= self::MIN_INTERVAL_SECONDS && $interval <= self::MAX_INTERVAL_SECONDS;
+        return $interval >= self::MIN_INTERVAL_SECONDS
+            && $interval <= self::MAX_INTERVAL_SECONDS
+            && $interval % 60 === 0;
     }
 }

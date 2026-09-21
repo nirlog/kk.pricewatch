@@ -13,6 +13,9 @@ On **KK PriceWatch → Notification settings**, an administrator enables automat
 interval from 5 through 1440 minutes. Bitrix then invokes `NotificationAgent`, which uses the shared
 `NotificationRunner`. The page reports the actual Agent state, interval, last execution, and next execution from
 `CAgent`. A fresh installation creates exactly one inactive Agent with a 60-minute interval.
+When an administrator enables an inactive Agent or changes its interval, the first execution is scheduled for
+the configured interval after saving (`NEXT_EXEC = now + interval`). Saving without changing Agent activation or
+interval preserves the existing `NEXT_EXEC` value and does not shift the schedule.
 
 ## Option B — cron / CLI
 
