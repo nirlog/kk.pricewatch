@@ -7,6 +7,7 @@ $MESS['KK_PRICEWATCH_EDIT_NOT_FOUND'] = 'Запрошенный конкурен
 $MESS['KK_PRICEWATCH_EDIT_WRITE_DENIED'] = 'Недостаточно прав для изменения данных.';
 $MESS['KK_PRICEWATCH_EDIT_BAD_SESSID'] = 'Сессия истекла. Обновите страницу и повторите действие.';
 $MESS['KK_PRICEWATCH_EDIT_INVALID_OPTIONS'] = 'Параметры коллектора должны быть корректным JSON-объектом.';
+$MESS['KK_PRICEWATCH_EDIT_INVALID_EXTERNAL_HANDLER'] = 'Обработчик внешнего коллектора должен быть безопасным абсолютным путём без URL, query, fragment и сегментов ..';
 $MESS['KK_PRICEWATCH_EDIT_CONFIRM_DELETE'] = 'Удаление не подтверждено.';
 $MESS['KK_PRICEWATCH_EDIT_DELETE_REFERENCED'] = 'Конкурент используется в связях с товарами. Деактивируйте его или сначала удалите связи.';
 $MESS['KK_PRICEWATCH_EDIT_CREATED'] = 'Создан';

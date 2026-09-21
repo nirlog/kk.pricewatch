@@ -7,6 +7,7 @@ $MESS['KK_PRICEWATCH_EDIT_NOT_FOUND'] = 'The requested competitor was not found.
 $MESS['KK_PRICEWATCH_EDIT_WRITE_DENIED'] = 'Write access is required.';
 $MESS['KK_PRICEWATCH_EDIT_BAD_SESSID'] = 'The session has expired. Refresh the page and try again.';
 $MESS['KK_PRICEWATCH_EDIT_INVALID_OPTIONS'] = 'Collector options must be a valid JSON object.';
+$MESS['KK_PRICEWATCH_EDIT_INVALID_EXTERNAL_HANDLER'] = 'External collector handler must be a safe absolute path without a URL, query, fragment, or .. segments.';
 $MESS['KK_PRICEWATCH_EDIT_CONFIRM_DELETE'] = 'Deletion was not confirmed.';
 $MESS['KK_PRICEWATCH_EDIT_DELETE_REFERENCED'] = 'This competitor is used by product links. Deactivate it or remove the links first.';
 $MESS['KK_PRICEWATCH_EDIT_CREATED'] = 'Created';

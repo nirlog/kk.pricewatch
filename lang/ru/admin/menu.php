@@ -7,3 +7,5 @@ $MESS['KK_PRICEWATCH_MENU_NOTIFICATIONS'] = 'Настройки уведомле
 $MESS['KK_PRICEWATCH_MENU_NOTIFICATIONS_TITLE'] = 'Настройка уведомлений мониторинга по электронной почте';
 $MESS['KK_PRICEWATCH_MENU_COMPETITORS'] = 'Конкуренты';
 $MESS['KK_PRICEWATCH_MENU_COMPETITORS_TITLE'] = 'Управление конкурентами';
+$MESS['KK_PRICEWATCH_MENU_EXTERNAL'] = 'Внешний коллектор';
+$MESS['KK_PRICEWATCH_MENU_EXTERNAL_TITLE'] = 'Настройка сервиса внешнего коллектора';

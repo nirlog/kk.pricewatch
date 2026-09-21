@@ -7,3 +7,5 @@ $MESS['KK_PRICEWATCH_MENU_NOTIFICATIONS'] = 'Notification settings';
 $MESS['KK_PRICEWATCH_MENU_NOTIFICATIONS_TITLE'] = 'Configure monitoring e-mail notifications';
 $MESS['KK_PRICEWATCH_MENU_COMPETITORS'] = 'Competitors';
 $MESS['KK_PRICEWATCH_MENU_COMPETITORS_TITLE'] = 'Manage competitors';
+$MESS['KK_PRICEWATCH_MENU_EXTERNAL'] = 'External collector';
+$MESS['KK_PRICEWATCH_MENU_EXTERNAL_TITLE'] = 'Configure the external collector service';
