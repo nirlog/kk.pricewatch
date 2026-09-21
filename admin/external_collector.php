@@ -4,6 +4,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use KK\PriceWatch\Admin\Access;
 use KK\PriceWatch\Collector\External\ExternalCollectorSettings;
+use KK\PriceWatch\Collector\External\ExternalCollectorTimeouts;
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
 if (!Loader::includeModule('kk.pricewatch') || !Access::canWrite()) $APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
 Loc::loadMessages(__FILE__);
@@ -15,7 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
     $values=['enabled'=>isset($_POST['enabled'])?'Y':'N','base_url'=>trim((string)($_POST['base_url']??'')),
     'connect_timeout'=>trim((string)($_POST['connect_timeout']??'')),'request_timeout'=>trim((string)($_POST['request_timeout']??''))];
     $newToken=trim((string)($_POST['token']??'')); $token=$newToken!==''?$newToken:$storedToken;
-    try { new ExternalCollectorSettings($values['enabled']==='Y',$values['base_url'],$token,(int)$values['connect_timeout'],(int)$values['request_timeout']); }
+    try {
+        $timeouts = ExternalCollectorTimeouts::fromStrings($values['connect_timeout'], $values['request_timeout']);
+        new ExternalCollectorSettings($values['enabled']==='Y',$values['base_url'],$token,$timeouts->connect,$timeouts->request);
+        $values['connect_timeout'] = (string) $timeouts->connect;
+        $values['request_timeout'] = (string) $timeouts->request;
+    }
     catch (\Throwable) { $errors[]=Loc::getMessage('KK_PRICEWATCH_EXTERNAL_INVALID'); }
     if ($errors===[]) {
         foreach (['enabled','base_url','connect_timeout','request_timeout'] as $key) Option::set($module,'external_collector_'.$key,$values[$key]);

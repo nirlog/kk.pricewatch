@@ -62,19 +62,30 @@ if ($request->isPost() && ($record !== null || $id === 0)) {
         ];
         try {
             $values['COLLECTOR_OPTIONS'] = CollectorOptions::encode(CollectorOptions::decode($values['COLLECTOR_OPTIONS']));
-            if ($values['COLLECTOR_TYPE'] === CollectorType::EXTERNAL) ExternalCollectorEndpoint::validateHandler($values['COLLECTOR_HANDLER']);
-            $result = $id > 0 ? CompetitorTable::update($id, $values) : CompetitorTable::add($values);
-            if ($result->isSuccess()) {
-                $savedId = $id > 0 ? $id : (int) $result->getId();
-                $target = $request->getPost('apply') !== null
-                    ? 'kk_pricewatch_competitor_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $savedId
-                    : 'kk_pricewatch_competitors.php?lang=' . LANGUAGE_ID;
-                LocalRedirect($target);
-            }
-            $error = implode('<br>', array_map('htmlspecialcharsbx', $result->getErrorMessages()));
         } catch (InvalidArgumentException) {
-            $error = Loc::getMessage($values['COLLECTOR_TYPE'] === CollectorType::EXTERNAL
-                ? 'KK_PRICEWATCH_EDIT_INVALID_EXTERNAL_HANDLER' : 'KK_PRICEWATCH_EDIT_INVALID_OPTIONS');
+            $error = Loc::getMessage('KK_PRICEWATCH_EDIT_INVALID_OPTIONS');
+        }
+        if ($error === '' && $values['COLLECTOR_TYPE'] === CollectorType::EXTERNAL) {
+            try {
+                ExternalCollectorEndpoint::validateHandler($values['COLLECTOR_HANDLER']);
+            } catch (InvalidArgumentException) {
+                $error = Loc::getMessage('KK_PRICEWATCH_EDIT_INVALID_EXTERNAL_HANDLER');
+            }
+        }
+        if ($error === '') {
+            try {
+                $result = $id > 0 ? CompetitorTable::update($id, $values) : CompetitorTable::add($values);
+                if ($result->isSuccess()) {
+                    $savedId = $id > 0 ? $id : (int) $result->getId();
+                    $target = $request->getPost('apply') !== null
+                        ? 'kk_pricewatch_competitor_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $savedId
+                        : 'kk_pricewatch_competitors.php?lang=' . LANGUAGE_ID;
+                    LocalRedirect($target);
+                }
+                $error = implode('<br>', array_map('htmlspecialcharsbx', $result->getErrorMessages()));
+            } catch (InvalidArgumentException) {
+                $error = Loc::getMessage('KK_PRICEWATCH_EDIT_INVALID_OPTIONS');
+            }
         }
     }
 }

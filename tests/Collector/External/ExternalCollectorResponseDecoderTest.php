@@ -7,6 +7,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 final class ExternalCollectorResponseDecoderTest extends TestCase
 {
+    public function testEmptyItemsJsonListIsValid(): void { $r=(new ExternalCollectorResponseDecoder())->decode('{"schema_version":"1.0","request_id":"r","success":true,"items":[]}'); self::assertSame([], $r->items); }
     public function testValidBatchMixedAndExtras(): void { $r=(new ExternalCollectorResponseDecoder())->decode('{"schema_version":"1.0","request_id":"r","success":true,"extra":1,"items":[{"id":"1","success":true,"price":"12.30","currency":"RUB","future":1},{"id":"2","success":false,"error":{"code":"PRICE_NOT_FOUND","message":"No"}}]}'); self::assertTrue($r->success); self::assertCount(2,$r->items); self::assertFalse($r->items[1]->success); }
     public function testValidGlobalFailure(): void { $r=(new ExternalCollectorResponseDecoder())->decode('{"schema_version":"1.0","request_id":"r","success":false,"items":[],"error":{"code":"COLLECTOR_ERROR","message":"Failed"}}'); self::assertSame('COLLECTOR_ERROR',$r->error?->code); }
     #[DataProvider('invalidResponses')]
@@ -16,6 +17,8 @@ final class ExternalCollectorResponseDecoderTest extends TestCase
         '{"schema_version":"1.0","request_id":"","success":true,"items":[]}',
         '{"schema_version":"1.0","request_id":"r","success":"yes","items":[]}',
         '{"schema_version":"1.0","request_id":"r","success":true,"items":{}}',
+        '{"schema_version":"1.0","request_id":"r","success":true,"items":[[]]}',
+        '{"schema_version":"1.0","request_id":"r","success":true,"items":[{"id":"1","success":false,"error":[]}]}',
         '{"schema_version":"1.0","request_id":"r","success":true,"items":[{"id":"1","success":true,"price":"1","currency":"RUB"},{"id":"1","success":false,"error":{"code":"X","message":"x"}}]}',
         '{"schema_version":"1.0","request_id":"r","success":true,"items":[{"id":"1","success":true,"price":1,"currency":"RUB"}]}',
         '{"schema_version":"1.0","request_id":"r","success":true,"items":[{"id":"1","success":true,"price":"-1","currency":"RUB"}]}',

@@ -6,12 +6,16 @@ final class BitrixExternalCollectorSettingsProvider implements ExternalCollector
 {
     public function get(): ExternalCollectorSettings
     {
+        $timeouts = ExternalCollectorTimeouts::fromStrings(
+            Option::get('kk.pricewatch', 'external_collector_connect_timeout', '5'),
+            Option::get('kk.pricewatch', 'external_collector_request_timeout', '60'),
+        );
         return new ExternalCollectorSettings(
             Option::get('kk.pricewatch', 'external_collector_enabled', 'N') === 'Y',
             Option::get('kk.pricewatch', 'external_collector_base_url', ''),
             Option::get('kk.pricewatch', 'external_collector_token', ''),
-            (int) Option::get('kk.pricewatch', 'external_collector_connect_timeout', '5'),
-            (int) Option::get('kk.pricewatch', 'external_collector_request_timeout', '60'),
+            $timeouts->connect,
+            $timeouts->request,
         );
     }
 }

@@ -83,10 +83,14 @@ final class UpdatePackageTest extends TestCase
     public function testExternalCollectorUpdaterHasNoNetworkOrBusinessActions(): void
     {
         $updater = (string) file_get_contents(dirname(__DIR__, 2) . '/install/updates/0.17.0/updater.php');
+        self::assertStringContainsString('use KK\\PriceWatch\\Installer\\AdminInstaller;', $updater);
+        self::assertStringContainsString("require_once \$moduleDirectory . '/include.php';", $updater);
+        self::assertStringContainsString("(new AdminInstaller())->install(\$moduleDirectory . '/install', \$_SERVER['DOCUMENT_ROOT']);", $updater);
         self::assertStringNotContainsString('HttpClient', $updater);
         self::assertStringNotContainsString('collect(', $updater);
         self::assertStringNotContainsString('Table::', $updater);
         self::assertStringNotContainsString('Mail', $updater);
+        self::assertStringNotContainsString('Option::set', $updater);
     }
 
     public function testNotificationAgentUpdaterOnlyRepairsAgentRegistration(): void
