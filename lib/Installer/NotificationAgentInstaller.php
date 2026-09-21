@@ -1,18 +1,104 @@
 <?php
+
 declare(strict_types=1);
+
 namespace KK\PriceWatch\Installer;
 
 use CAgent;
 use KK\PriceWatch\Agent\NotificationAgent;
+use RuntimeException;
 
 final class NotificationAgentInstaller
 {
     public const MODULE_ID = 'kk.pricewatch';
+    public const DEFAULT_INTERVAL_SECONDS = 3600;
+    public const MIN_INTERVAL_SECONDS = 300;
+    public const MAX_INTERVAL_SECONDS = 86400;
+
     public function install(): void
     {
-        $agents = CAgent::GetList(['ID' => 'ASC'], ['MODULE_ID' => self::MODULE_ID, '=NAME' => NotificationAgent::INVOCATION]);
-        if (!$agents->Fetch()) CAgent::AddAgent(NotificationAgent::INVOCATION, self::MODULE_ID, 'N', 3600, '', 'N');
-        while ($duplicate = $agents->Fetch()) CAgent::Delete((int) $duplicate['ID']);
+        $records = $this->findAll();
+        if ($records === []) {
+            $id = CAgent::AddAgent(
+                NotificationAgent::INVOCATION,
+                self::MODULE_ID,
+                'N',
+                self::DEFAULT_INTERVAL_SECONDS,
+                '',
+                'N'
+            );
+            if (!$id) {
+                throw new RuntimeException('Unable to create notification agent.');
+            }
+            return;
+        }
+
+        $primary = array_shift($records);
+        $interval = (int) ($primary['AGENT_INTERVAL'] ?? 0);
+        if (!$this->isValidIntervalSeconds($interval)
+            && !CAgent::Update((int) $primary['ID'], ['AGENT_INTERVAL' => self::DEFAULT_INTERVAL_SECONDS])) {
+            throw new RuntimeException('Unable to normalize notification agent interval.');
+        }
+
+        foreach ($records as $duplicate) {
+            if (!CAgent::Delete((int) $duplicate['ID'])) {
+                throw new RuntimeException('Unable to remove duplicate notification agent.');
+            }
+        }
     }
-    public function uninstall(): void { CAgent::RemoveAgent(NotificationAgent::INVOCATION, self::MODULE_ID); }
+
+    public function getState(): NotificationAgentState
+    {
+        $this->install();
+        $record = $this->findAll()[0] ?? null;
+        if ($record === null) {
+            throw new RuntimeException('Notification agent is unavailable.');
+        }
+
+        return NotificationAgentState::fromAgentRecord($record);
+    }
+
+    public function configure(bool $active, int $intervalSeconds): void
+    {
+        if (!$this->isValidIntervalSeconds($intervalSeconds)) {
+            throw new RuntimeException('Invalid notification agent interval.');
+        }
+
+        $this->install();
+        $record = $this->findAll()[0] ?? null;
+        if ($record === null || !CAgent::Update((int) $record['ID'], [
+            'ACTIVE' => $active ? 'Y' : 'N',
+            'AGENT_INTERVAL' => $intervalSeconds,
+        ])) {
+            throw new RuntimeException('Unable to configure notification agent.');
+        }
+
+        $state = $this->getState();
+        if ($state->active !== $active || $state->intervalSeconds !== $intervalSeconds) {
+            throw new RuntimeException('Notification agent configuration was not applied.');
+        }
+    }
+
+    public function uninstall(): void
+    {
+        CAgent::RemoveAgent(NotificationAgent::INVOCATION, self::MODULE_ID);
+    }
+
+    private function findAll(): array
+    {
+        $result = CAgent::GetList(
+            ['ID' => 'ASC'],
+            ['MODULE_ID' => self::MODULE_ID, '=NAME' => NotificationAgent::INVOCATION]
+        );
+        $records = [];
+        while ($record = $result->Fetch()) {
+            $records[] = $record;
+        }
+        return $records;
+    }
+
+    private function isValidIntervalSeconds(int $interval): bool
+    {
+        return $interval >= self::MIN_INTERVAL_SECONDS && $interval <= self::MAX_INTERVAL_SECONDS;
+    }
 }
