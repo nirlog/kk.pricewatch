@@ -6,6 +6,13 @@ namespace KK\PriceWatch\Service;
 
 use KK\PriceWatch\Collector\CollectorInterface;
 use KK\PriceWatch\Collector\Exception\InvalidConfigurationException;
+use KK\PriceWatch\Collector\External\BitrixExternalCollectorSettingsProvider;
+use KK\PriceWatch\Collector\External\BitrixExternalCollectorTransport;
+use KK\PriceWatch\Collector\External\ExternalCollector;
+use KK\PriceWatch\Collector\External\ExternalCollectorEndpoint;
+use KK\PriceWatch\Collector\External\ExternalCollectorResponseDecoder;
+use KK\PriceWatch\Collector\External\ExternalCollectorSettingsProviderInterface;
+use KK\PriceWatch\Collector\External\ExternalCollectorTransportInterface;
 use KK\PriceWatch\Collector\Http\BitrixHttpTransport;
 use KK\PriceWatch\Collector\Http\DomXPathPriceExtractor;
 use KK\PriceWatch\Collector\Http\HtmlPriceExtractorInterface;
@@ -22,6 +29,9 @@ final class DefaultCollectorFactory implements CollectorFactoryInterface
     public function __construct(
         private readonly ?HttpTransportInterface $httpTransport = null,
         private readonly ?HtmlPriceExtractorInterface $htmlExtractor = null,
+        private readonly ?ExternalCollectorSettingsProviderInterface $externalSettings = null,
+        private readonly ?ExternalCollectorTransportInterface $externalTransport = null,
+        private readonly ?ExternalCollectorResponseDecoder $externalDecoder = null,
     ) {
     }
 
@@ -30,6 +40,9 @@ final class DefaultCollectorFactory implements CollectorFactoryInterface
         $type = $competitor['COLLECTOR_TYPE'] ?? null;
         if ($type === CollectorType::HTTP) {
             return $this->createHttp($competitor);
+        }
+        if ($type === CollectorType::EXTERNAL) {
+            return $this->createExternal($competitor);
         }
         if ($type !== CollectorType::MOCK) {
             throw new InvalidConfigurationException('The configured collector type is not available.');
@@ -53,6 +66,25 @@ final class DefaultCollectorFactory implements CollectorFactoryInterface
         }
 
         return new MockCollector($scenarios, $default);
+    }
+
+    /** @param array<string, mixed> $competitor */
+    private function createExternal(array $competitor): CollectorInterface
+    {
+        $settings = ($this->externalSettings ?? new BitrixExternalCollectorSettingsProvider())->get();
+        if (!$settings->enabled) {
+            throw new InvalidConfigurationException('External collector subsystem is disabled.');
+        }
+        $handler = $competitor['COLLECTOR_HANDLER'] ?? null;
+        if (!is_string($handler)) {
+            throw new InvalidConfigurationException('External collector handler is required.');
+        }
+        return new ExternalCollector(
+            ExternalCollectorEndpoint::resolve($settings->baseUrl, $handler),
+            $settings->token(), $settings->connectTimeout, $settings->requestTimeout,
+            $this->externalTransport ?? new BitrixExternalCollectorTransport(),
+            $this->externalDecoder ?? new ExternalCollectorResponseDecoder(),
+        );
     }
 
     /** @param array<string, mixed> $competitor */

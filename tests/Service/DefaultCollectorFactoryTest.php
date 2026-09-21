@@ -10,6 +10,11 @@ use KK\PriceWatch\Collector\Exception\InvalidConfigurationException;
 use KK\PriceWatch\Collector\Http\HttpFetchResult;
 use KK\PriceWatch\Collector\Http\HttpHtmlCollector;
 use KK\PriceWatch\Collector\Http\HttpTransportInterface;
+use KK\PriceWatch\Collector\External\ExternalCollector;
+use KK\PriceWatch\Collector\External\ExternalCollectorHttpResult;
+use KK\PriceWatch\Collector\External\ExternalCollectorSettings;
+use KK\PriceWatch\Collector\External\ExternalCollectorSettingsProviderInterface;
+use KK\PriceWatch\Collector\External\ExternalCollectorTransportInterface;
 use KK\PriceWatch\Collector\Mock\MockCollector;
 use KK\PriceWatch\Model\CollectorOptions;
 use KK\PriceWatch\Model\CollectorType;
@@ -53,15 +58,15 @@ final class DefaultCollectorFactoryTest extends TestCase
         self::assertSame('99.00', $result->price);
     }
 
-    public function testMalformedOptionsAndExternalAreUnavailable(): void
+    public function testMalformedMockOptionsAreUnavailable(): void
     {
         $factory = new DefaultCollectorFactory();
-        foreach ([$this->competitor(['scenarios' => 'bad']), ['COLLECTOR_TYPE' => CollectorType::EXTERNAL, 'COLLECTOR_OPTIONS' => '{}']] as $competitor) {
+        foreach ([$this->competitor(['scenarios' => 'bad'])] as $competitor) {
             try { $factory->create($competitor); self::fail('Configuration should fail.'); } catch (InvalidConfigurationException) { self::assertTrue(true); }
         }
     }
 
-    public function testFactoryCreatesMockAndHttpButNotExternal(): void
+    public function testFactoryCreatesMockHttpAndExternal(): void
     {
         $transport = new class implements HttpTransportInterface {
             public function fetch(string $url): HttpFetchResult { return HttpFetchResult::failure(); }
@@ -72,8 +77,17 @@ final class DefaultCollectorFactoryTest extends TestCase
             'DOMAIN' => 'example.test',
             'COLLECTOR_OPTIONS' => '{"price_selector":{"type":"xpath","value":"//b"},"currency":"RUB"}',
         ]));
-        $this->expectException(InvalidConfigurationException::class);
-        (new DefaultCollectorFactory())->create(['COLLECTOR_TYPE' => CollectorType::EXTERNAL]);
+        $settings = new class implements ExternalCollectorSettingsProviderInterface {
+            public function get(): ExternalCollectorSettings { return new ExternalCollectorSettings(true, 'https://collector.test', 'secret'); }
+        };
+        $externalTransport = new class implements ExternalCollectorTransportInterface {
+            public int $calls = 0;
+            public function post(string $endpoint, string $body, array $headers, int $connectTimeout, int $requestTimeout): ExternalCollectorHttpResult { ++$this->calls; return ExternalCollectorHttpResult::failure(); }
+        };
+        self::assertInstanceOf(ExternalCollector::class, (new DefaultCollectorFactory($transport, null, $settings, $externalTransport))->create([
+            'COLLECTOR_TYPE' => CollectorType::EXTERNAL, 'COLLECTOR_HANDLER' => '/api/collect',
+        ]));
+        self::assertSame(0, $externalTransport->calls, 'Factory must not perform network I/O.');
     }
 
     #[DataProvider('invalidHttpConfigurations')]

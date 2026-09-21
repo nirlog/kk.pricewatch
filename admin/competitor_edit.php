@@ -8,6 +8,7 @@ use KK\PriceWatch\Model\CollectorOptions;
 use KK\PriceWatch\Model\CollectorType;
 use KK\PriceWatch\Model\CompetitorTable;
 use KK\PriceWatch\Model\ProductCompetitorTable;
+use KK\PriceWatch\Collector\External\ExternalCollectorEndpoint;
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
 
@@ -61,6 +62,7 @@ if ($request->isPost() && ($record !== null || $id === 0)) {
         ];
         try {
             $values['COLLECTOR_OPTIONS'] = CollectorOptions::encode(CollectorOptions::decode($values['COLLECTOR_OPTIONS']));
+            if ($values['COLLECTOR_TYPE'] === CollectorType::EXTERNAL) ExternalCollectorEndpoint::validateHandler($values['COLLECTOR_HANDLER']);
             $result = $id > 0 ? CompetitorTable::update($id, $values) : CompetitorTable::add($values);
             if ($result->isSuccess()) {
                 $savedId = $id > 0 ? $id : (int) $result->getId();
@@ -71,7 +73,8 @@ if ($request->isPost() && ($record !== null || $id === 0)) {
             }
             $error = implode('<br>', array_map('htmlspecialcharsbx', $result->getErrorMessages()));
         } catch (InvalidArgumentException) {
-            $error = Loc::getMessage('KK_PRICEWATCH_EDIT_INVALID_OPTIONS');
+            $error = Loc::getMessage($values['COLLECTOR_TYPE'] === CollectorType::EXTERNAL
+                ? 'KK_PRICEWATCH_EDIT_INVALID_EXTERNAL_HANDLER' : 'KK_PRICEWATCH_EDIT_INVALID_OPTIONS');
         }
     }
 }

@@ -76,6 +76,7 @@ class kk_pricewatch extends CModule
             'kk_pricewatch_price_history.php',
             'kk_pricewatch_monitoring.php',
             'kk_pricewatch_notification_settings.php',
+            'kk_pricewatch_external_collector.php',
         ] as $proxyFile) {
             $proxyPath = $adminDirectory . '/' . $proxyFile;
             clearstatcache(true, $proxyPath);

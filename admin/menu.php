@@ -25,6 +25,11 @@ return [
         'url' => 'kk_pricewatch_monitoring.php?lang=' . LANGUAGE_ID,
         'more_url' => [],
     ], Access::canWrite() ? [
+        'text' => Loc::getMessage('KK_PRICEWATCH_MENU_EXTERNAL'),
+        'title' => Loc::getMessage('KK_PRICEWATCH_MENU_EXTERNAL_TITLE'),
+        'url' => 'kk_pricewatch_external_collector.php?lang=' . LANGUAGE_ID,
+        'more_url' => [],
+    ] : null, Access::canWrite() ? [
         'text' => Loc::getMessage('KK_PRICEWATCH_MENU_NOTIFICATIONS'),
         'title' => Loc::getMessage('KK_PRICEWATCH_MENU_NOTIFICATIONS_TITLE'),
         'url' => 'kk_pricewatch_notification_settings.php?lang=' . LANGUAGE_ID,

@@ -98,3 +98,40 @@ not included in these errors.
    failures. Keep expected per-item failures in item results.
 4. Add contract tests for batches, mixed results, identity round-tripping, money
    validation, and implementation-specific failure behavior.
+
+## External Collector API
+
+Select `external` for a competitor and set `COLLECTOR_HANDLER` to an absolute path
+such as `/api/collectors/browser`. The handler is routing metadata expressed only
+in the endpoint path: it cannot contain a URL, authority, query, fragment,
+backslash, control character, or `..` segment. It is appended to the globally
+configured, normalized service base URL (including any base path).
+
+Configure the service under **KK PriceWatch → External collector**. The subsystem
+is disabled by default. Enabling requires a base URL, Bearer API token, connection
+timeout (1–30 seconds), and request timeout (5–300 seconds, not shorter than the
+connection timeout). Non-loopback services require HTTPS. Plain HTTP is accepted
+only for `localhost`, `127.0.0.1`, and `::1`; validation performs no DNS lookup.
+Base URLs cannot contain credentials, query strings, or fragments.
+
+The module sends `POST` with `Content-Type` and `Accept: application/json` and an
+`Authorization: Bearer` header. Redirects are disabled and responses are limited
+to 2 MiB. The body is exactly collector contract 1.0 (`schema_version`,
+`request_id`, `items`, and opaque `options`); handler, ORM IDs, and secrets are
+never added. Full item URLs and query parameters are preserved.
+
+The service must return a JSON media type and a strict contract 1.0 response.
+Unknown fields are permitted, but required field types, identities, unique item
+IDs, decimal-string money, currency, and structured errors are validated before
+any result reaches persistence. A protocol-level global error uses HTTP 200 with
+`success: false`, empty `items`, and `error`; per-item errors coexist with other
+successful items. Non-2xx responses are transport failures. Timeout maps to
+`COLLECTOR_TIMEOUT`; network/DNS/connect/TLS and non-2xx failures map to
+`COLLECTOR_ERROR`; oversized, non-JSON, malformed JSON, or invalid-contract
+responses map to `INVALID_RESPONSE`.
+
+The token is stored only as a module option and sent only in the Authorization
+header. Its saved value is never rendered (even partially); a blank password
+field preserves it. It must not be put in URLs, competitor options, request
+bodies, logs, history, monitoring records, or error messages. The adapter does
+not retry, redirect, execute browsers, or implement competitor-specific logic.
